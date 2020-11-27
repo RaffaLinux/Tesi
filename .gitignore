@@ -1,0 +1,5 @@
+/.venv
+/.vscode
+/Kitsune-Testa/Dataset/
+/Kitsune-Testa/TestaRisultati/
+*.csv
