@@ -1,9 +1,12 @@
 import glob
 import pandas as pd
 import math
+import datetime
 import os
+import progressbar
 import numpy as np
 import tensorflow as tf
+from tslearn.clustering import TimeSeriesKMeans
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Input,Dense,Dropout
 from matplotlib import pyplot as plt
@@ -14,39 +17,45 @@ from sklearn.model_selection import StratifiedKFold
 from enum import Enum
 
 class Device(Enum):
-   Danmini_Doorbell = 1
-   Ecobee_Thermostat = 2
-   Ennio_Doorbell = 3
-   Philips_B120N10_Baby_Monitor = 4
-   Provision_PT_737E_Security_Camera = 5
-   Provision_PT_838_Security_Camera = 6
-   Samsung_SNH_1011_N_Webcam = 7
-   SimpleHome_XCS7_1002_WHT_Security_Camera = 8
-   SimpleHome_XCS7_1003_WHT_Security_Camera = 9
+   Danmini_Doorbell = 0
+   Ecobee_Thermostat = 1
+   Ennio_Doorbell = 2
+   Philips_B120N10_Baby_Monitor = 3
+   Provision_PT_737E_Security_Camera = 4
+   Provision_PT_838_Security_Camera = 5
+   Samsung_SNH_1011_N_Webcam = 6
+   SimpleHome_XCS7_1002_WHT_Security_Camera = 7
+   SimpleHome_XCS7_1003_WHT_Security_Camera = 8
 
 class Attack(Enum):
-   benign_traffic = 1
-   gafgyt_combo = 2
-   gafgyt_junk = 3
-   gafgyt_scan = 4
-   gafgyt_tcp = 5
-   gafgyt_udp = 6
-   mirai_ack = 7
-   mirai_scan = 8
-   mirai_syn = 9
-   mirai_udp = 10
-   mirai_udpplain = 11
+   benign_traffic = 0
+   gafgyt_combo = 1
+   gafgyt_junk = 2
+   gafgyt_scan = 3
+   gafgyt_tcp = 4
+   gafgyt_udp = 5
+   mirai_ack = 6
+   mirai_scan = 7
+   mirai_syn = 8
+   mirai_udp = 9
+   mirai_udpplain = 10
 
-
+def StampaValori(iteration,n_autoencoder):
+    dataset=pd.DataFrame({'Indice': test_index, 'Dispositivo': test_labels[:,1], 'TipologiaAttacco': test_labels[:,0],'RMSE:': RMSE})
+    dataset.to_csv('Danmini'+'/'+str(n_autoencoder)+'AE/Fold'+str(iteration+1)+'.csv',index=False, sep=',')
 
 
 #Lettura del dataset dai csv da far diventare una funzione
 os.chdir('./Kitsune-Testa')
 dataset = dict()
 dataset_path = "./Dataset/"
+progress = 0
 csv_paths = glob.glob(dataset_path+'**/*.csv', recursive = True)
+print("Loading dataset")
+bar = progressbar.ProgressBar(maxval=len(csv_paths), widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+bar.start()
 for csv_path in csv_paths:
-   print(csv_path)
+#print(csv_path)
    attack = ''
    device = csv_path.split('\\')[1]
    if device not in dataset:
@@ -56,9 +65,12 @@ for csv_path in csv_paths:
    else:
       attack = csv_path.split('\\')[2]
    attack = attack.replace(".csv","")
-   print(attack)
+   #print(attack)
    dataset[device][attack] = pd.read_csv(csv_path, delimiter = ',')
    dataset[device][attack]['Attack'],dataset[device][attack]['Device'] = [Attack[attack].value,Device[device].value]
+   progress += 1
+   bar.update(progress)
+bar.finish()
 
 #Conversione dataset Danmini da Dataframe a numpy, creazione dataset benigno, maligno e misto
 danmini_dataset = dataset['Danmini_Doorbell']
@@ -66,11 +78,22 @@ danmini_benign = danmini_dataset['benign_traffic']
 danmini_benign = pd.concat([danmini_benign], ignore_index=True)
 print(danmini_benign)
 danmini_benign = danmini_benign.to_numpy()
-dabnubu_benign = danmini_benign.astype('float32')
+danmini_benign = danmini_benign.astype('float32')
+
+
 danmini_malign = pd.concat([value for key, value in danmini_dataset.items() if key not in ('benign_traffic')], ignore_index=True).to_numpy().astype('float32')
+danmini_benign = np.concatenate([danmini_benign,danmini_malign], axis = 0)
 danmini_all = np.concatenate([danmini_benign,danmini_malign], axis = 0)
 np.random.shuffle(danmini_all)
 np.random.seed()
+
+# clustering = danmini_all[:, :116]
+# clustering = clustering[(clustering[:,115] == 1)]
+# clustering_features = clustering[:,:115]
+# scaler_clustering = MinMaxScaler(feature_range = (0,1))
+# training_features = scaler_clustering.fit_transform(clustering_features)
+# km = TimeSeriesKMeans(n_clusters=3, metric="dtw", max_iter=5,random_state=0, verbose=1, n_jobs = 12).fit(clustering_features)
+# print(km.cluster_centers_.shape)
 
 
 skf = StratifiedKFold(n_splits = 10, shuffle = True, random_state = 0)
@@ -81,12 +104,12 @@ for n_autoencoder in (5,10,15,20):
    n_autoencoder2 = n_autoencoder-n_autoencoder1
    iteration = 0
    for train_index, test_index in skf.split(danmini_all, danmini_all[:,115]):
-      with tf.device('/cpu:0'):
+      with tf.device('/gpu:0'):
          print("Train:", train_index, "Test:", test_index)
          train_index = train_index.astype('int32')
          test_index = test_index.astype('int32')
          training = danmini_all[train_index, :116]
-         training = training[(training[:,115] == 1)]
+         training = training[(training[:,115] == 0)]
          training_features = training[:,:115]
          training_labels = training[:, 115]
          training_labels = training_labels.astype('int')
@@ -113,7 +136,7 @@ for n_autoencoder in (5,10,15,20):
 
          Output = Sequential()
          Output.add(Dense(units = n_autoencoder, activation = 'relu', input_shape = (n_autoencoder,)))
-         Output.add(Dense(units = math.floor(0.75/n_autoencoder), activation = 'relu'))
+         Output.add(Dense(units = math.floor(0.75*n_autoencoder), activation = 'relu'))
          Output.add(Dense(units = n_autoencoder, activation = 'sigmoid'))
          Output.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics = ['accuracy'])
 
@@ -152,24 +175,30 @@ for n_autoencoder in (5,10,15,20):
          score = scaler2.fit_transform(score)
          print("Output fit")
 #Aggiustare gli spazi di questa roba qua sotto
+
          Output.fit(score,score, epochs = 1, batch_size = 32)
          RMSE = np.zeros(score.shape[0])
          print("Output pred")
          pred = Output.predict(score)
+
          for i in range(score.shape[0]):
             RMSE[i] = np.sqrt(metrics.mean_squared_error(pred[i], score[i]))
-         test_features=scaler1.transform(test_features)
-         test_score=np.zeros((test_features.shape[0],n_autoencoder))
+
+            #Testing
+         test_features = scaler1.transform(test_features)
+         test_score = np.zeros((test_features.shape[0], n_autoencoder))
          for j in range(n_autoencoder1):
-            pred=Ensemble1[j].predict(test_features[:,j*n_features1:(j+1)*n_features1])
+            pred = Ensemble1[j].predict(test_features[:,j*n_features1 : (j+1)*n_features1], batch_size = 512)
             for i in range(test_features.shape[0]):
-               test_score[i,j]= np.sqrt(metrics.mean_squared_error(pred[i],test_features[i,j*n_features1:(j+1)*n_features1]))
+               test_score[i,j] = np.sqrt(metrics.mean_squared_error(pred[i],test_features[i,j*n_features1 : (j+1)*n_features1]))
          for j in range(n_autoencoder2):
-            pred=Ensemble2[j].predict(test_features[:,n_autoencoder1*n_features1+j*n_features2:n_autoencoder1*n_features1+(j+1)*n_features2])
+            pred = Ensemble2[j].predict(test_features[:,n_autoencoder1*n_features1+j*n_features2 : n_autoencoder1*n_features1+(j+1)*n_features2],batch_size = 512 )
             for i in range(test_features.shape[0]):
-               test_score[i,j+n_autoencoder1]= np.sqrt(metrics.mean_squared_error(pred[i],test_features[i,n_autoencoder1*n_features1+j*n_features2:n_autoencoder1*n_features1+(j+1)*n_features2]))
-         test_score=scaler2.transform(test_score)
+               test_score[i,j+n_autoencoder1] = np.sqrt(metrics.mean_squared_error(pred[i],test_features[i,n_autoencoder1*n_features1+j*n_features2 : n_autoencoder1*n_features1+(j+1)*n_features2]))
+         test_score = scaler2.transform(test_score)
          RMSE=np.zeros(test_score.shape[0])
-         pred=Output.predict(test_score)
+         pred=Output.predict(test_score,batch_size = 512)
          for i in range(test_score.shape[0]):
             RMSE[i]= np.sqrt(metrics.mean_squared_error(pred[i],test_score[i]))
+         StampaValori(iteration,n_autoencoder)
+         iteration += 1
