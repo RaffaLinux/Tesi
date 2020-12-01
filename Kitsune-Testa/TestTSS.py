@@ -116,7 +116,7 @@ ennio_all = np.concatenate([ennio_benign,ennio_malign], axis = 0)
 # print(km.cluster_centers_.shape)
 
 
-tss = TimeSeriesSplit(10)
+tss = TimeSeriesSplit(5)
 for n_autoencoder in (5,10,15,20):
    n_autoencoder1 = 115%n_autoencoder
    n_features2 = math.floor(115/n_autoencoder)
@@ -203,16 +203,14 @@ for n_autoencoder in (5,10,15,20):
 
 
          #FASE DI TESTING SKF on TSS
-         skf = StratifiedKFold(10)
+         skf = StratifiedKFold(5)
          
-         ennio_mix = np.concatenate([testing, ennio_malign], axis = 0)
-         np.random.shuffle(ennio_mix)
-         np.random.seed()
 
          skf_iteration = 0
-         for train_index_skf, test_index_skf in skf.split(ennio_mix, ennio_mix[:,115]):
-            test_features_skf = ennio_mix[test_index_skf, : 115]
-            test_labels_skf = ennio_mix[test_index_skf, 115:117]
+         for train_index_skf, test_index_skf in skf.split(ennio_malign, ennio_malign[:,115]):
+            ennio_mix = np.concatenate([testing, ennio_malign[test_index_skf, : 116]], axis = 0)
+            test_features_skf = ennio_mix[ :, : 115]
+            test_labels_skf = ennio_mix[ : , 115:117]
             test_labels_skf = test_labels_skf.astype('int')
 
             test_features_skf=scaler1.transform(test_features_skf)
