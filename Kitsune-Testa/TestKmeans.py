@@ -9,6 +9,7 @@ import numpy as np
 import tensorflow as tf
 import time
 from tslearn.clustering import TimeSeriesKMeans, KShape, KernelKMeans
+from tslearn.preprocessing import TimeSeriesScalerMinMax
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Input,Dense,Dropout
 from matplotlib import pyplot as plt
@@ -51,15 +52,15 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
 
    dataset = pd.concat([dataset], ignore_index=True)
 
-   subset = dataset.head(n = math.floor(len(dataset.index)*0.01))
+   subset = dataset.head(n = math.floor(len(dataset.index)*0.1))
    transposed = subset.transpose()
    transposed = transposed.to_numpy().astype('float32')
 
 
-   for i in [5,10,20]:
+   for i in [5,10,15,20]:
       clustering = transposed[:116, :]
       clustering_features = clustering[:115,:]
-      scaler_clustering = MinMaxScaler(feature_range = (0,1))
+      scaler_clustering = TimeSeriesScalerMinMax(value_range = (0,1))
       clustering_features = scaler_clustering.fit_transform(clustering_features)
       if algorithm == 'Kmeans':
          k = TimeSeriesKMeans(n_clusters=i, metric="softdtw", max_iter=3, verbose=0, n_jobs = 12, max_iter_barycenter = 6)
@@ -118,7 +119,7 @@ bar.finish()
 ennio_dataset = dataset['Ennio_Doorbell']
 ennio_benign = ennio_dataset['benign_traffic']
 
-Clustering(dataset = ennio_benign,algorithm = 'Kmeans', device = 'Ennio_Doorbell')
+Clustering(dataset = ennio_benign,algorithm = 'KernelKmeans', device = 'Ennio_Doorbell')
 
 # ennio_benign = pd.concat([ennio_benign], ignore_index=True)
 
