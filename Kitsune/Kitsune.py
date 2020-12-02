@@ -52,7 +52,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
 
    dataset = pd.concat([dataset], ignore_index=True)
 
-   subset = dataset.head(n = math.floor(len(dataset.index)*0.1))
+   subset = dataset.head(n = math.floor(len(dataset.index)*0.01))
    transposed = subset.transpose()
    transposed = transposed.to_numpy().astype('float32')
 
@@ -70,8 +70,25 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
          k = KernelKMeans(n_clusters = i, max_iter = 3, n_jobs = 12)
       else:
          return
-      k.fit(clustering_features)
+
+      y_pred = k.fit_predict(clustering_features)
       results.loc[len(results)] = k.labels_.tolist()
+      plt.figure()
+      sz = clustering_features.shape[1]
+
+      for yi in range(i):
+         plt.subplot(i, 1, 1 + yi)
+         for xx in clustering_features[y_pred == yi]:
+            plt.plot(xx.ravel(), "k-", alpha=.2)
+         plt.xlim(0, sz)
+         plt.ylim(0, 1)
+         plt.text(1, 0.50,'Cluster %d' % (yi),transform=plt.gca().transAxes)
+         if yi == 1:
+            plt.title("KernelKmeans")
+      
+
+      plt.tight_layout()
+      plt.savefig(str(i)+'.png', dpi = 300)
    
    #results = results.transpose()
    if not os.path.isdir('./Clustering/'+device):

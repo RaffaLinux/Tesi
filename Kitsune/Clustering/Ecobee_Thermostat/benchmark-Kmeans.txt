@@ -1,0 +1,4 @@
+Benchmark 12/02/2020, 23:01:31
+5 clusters
+     Wall time: 1275.538541316986
+     Process time: 1269.59375
