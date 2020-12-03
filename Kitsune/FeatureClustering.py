@@ -85,7 +85,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
          return
 
       y_pred = k.fit_predict(clustering_features)
-      k.to_json('./Clustering/'+device+'/'+algorithm+'.json')
+      k.to_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
       print("A loop has been completed")
 
       wall_clustering_time = time.time() - wall_time
@@ -162,5 +162,5 @@ dataset = pd.concat([dataset], ignore_index=True)
 print(dataset)
 
 
-for algorithm in ['kshape', 'KernelKmeans', 'Kmeans']:
+for algorithm in ['Kshape', 'KernelKmeans', 'Kmeans']:
    Clustering(dataset = dataset,algorithm = algorithm, device = device)
