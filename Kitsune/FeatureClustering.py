@@ -44,7 +44,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
 
    dataset = pd.concat([dataset], ignore_index=True)
 
-   subset = dataset.head(n = math.floor(len(dataset.index)*0.16))
+   subset = dataset.head(n = math.floor(len(dataset.index)*0.09))
    # subset = subset.transpose()
    subset = subset.to_numpy().astype('float32')
    
@@ -68,7 +68,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
       scaler_clustering = MinMaxScaler(feature_range = (0,1))
       clustering_features = scaler_clustering.fit_transform(clustering_features)
       clustering_features = np.transpose(clustering_features)
-     # print(clustering_features)
+      # print(clustering_features)
 
       # clustering = subset[:116, :]
       # clustering_features = clustering[:115,:]
@@ -76,11 +76,11 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
       # clustering_features = scaler_clustering.fit_transform(clustering_features)
 
       if algorithm == 'Kmeans':
-         k = TimeSeriesKMeans(n_clusters=i, metric="softdtw", max_iter=3, verbose=0, n_jobs = 12, max_iter_barycenter = 3)
+         k = TimeSeriesKMeans(n_clusters=i, metric="softdtw", max_iter=3, verbose=1, n_jobs = 12, max_iter_barycenter = 3)
       elif algorithm == 'Kshape':
-         k = KShape(n_clusters=i,max_iter= 3)
+         k = KShape(n_clusters=i,max_iter= 3, verbose = 1)
       elif algorithm == 'KernelKmeans':
-         k = KernelKMeans(n_clusters = i, max_iter = 3, n_jobs = 12)
+         k = KernelKMeans(n_clusters = i, max_iter = 50, n_jobs = 12, verbose = 1)
       else:
          return
 
@@ -145,7 +145,6 @@ for csv_path in csv_paths:
    attack = attack.replace(".csv","")
    #print(attack)
    dataset[device][attack] = pd.read_csv(csv_path, delimiter = ',')
-   dataset[device][attack]['Attack'],dataset[device][attack]['Device'] = [Attack[attack].value,Device[device].value]
    progress += 1
    bar.update(progress)
 bar.finish()
@@ -153,6 +152,7 @@ bar.finish()
 
 
 #Conversione dataset Ennio da Dataframe a numpy, creazione dataset benigno, maligno e misto
+
 device = Device(int(sys.argv[1])).name
 device_dataset = dataset[device]
 device_benign = device_dataset['benign_traffic']
@@ -162,5 +162,5 @@ dataset = pd.concat([dataset], ignore_index=True)
 print(dataset)
 
 
-for algorithm in ['Kshape', 'KernelKmeans', 'Kmeans']:
+for algorithm in ['Kshape']:
    Clustering(dataset = dataset,algorithm = algorithm, device = device)
