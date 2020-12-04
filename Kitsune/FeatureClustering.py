@@ -44,6 +44,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
 
    dataset = pd.concat([dataset], ignore_index=True)
 
+#~400 entries limite superiore per KernelKmeans
    subset = dataset.head(n = math.floor(len(dataset.index)*0.09))
    # subset = subset.transpose()
    subset = subset.to_numpy().astype('float32')
@@ -80,7 +81,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
       elif algorithm == 'Kshape':
          k = KShape(n_clusters=i,max_iter= 3, verbose = 1)
       elif algorithm == 'KernelKmeans':
-         k = KernelKMeans(n_clusters = i, max_iter = 50, n_jobs = 12, verbose = 1)
+         k = KernelKMeans(n_clusters = i, max_iter = 50, n_jobs = 12, verbose = 1, n_init= 100)
       else:
          return
 
@@ -162,5 +163,5 @@ dataset = pd.concat([dataset], ignore_index=True)
 print(dataset)
 
 
-for algorithm in ['Kshape']:
+for algorithm in ['Kmeans']:
    Clustering(dataset = dataset,algorithm = algorithm, device = device)

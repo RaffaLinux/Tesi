@@ -1,13 +1,13 @@
-Benchmark 12/03/2020, 13:04:18
+Benchmark 12/04/2020, 00:35:49
 5 clusters
-     Wall time: 394.9710569381714
-     Process time: 394.484375
+     Wall time: 1132.9898822307587
+     Process time: 1128.6875
 10 clusters
-     Wall time: 3578.201637029648
-     Process time: 3574.890625
+     Wall time: 3674.883565187454
+     Process time: 3661.0625
 15 clusters
-     Wall time: 5632.69414973259
-     Process time: 5620.34375
+     Wall time: 5519.3165764808655
+     Process time: 5513.59375
 20 clusters
-     Wall time: 7511.281912088394
-     Process time: 7499.75
+     Wall time: 7517.614835739136
+     Process time: 7508.84375
