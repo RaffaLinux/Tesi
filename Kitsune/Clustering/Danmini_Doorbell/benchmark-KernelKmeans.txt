@@ -10,4 +10,28 @@ Benchmark 12/03/2020, 05:55:07
      Process time: 39226.390625
 20 clusters
      Wall time: 4372.242031574249
-     Process time: 39202.234375
+     Process time: 39202.234375Benchmark 12/05/2020, 00:13:14
+5 clusters
+     Wall time: 15.082513570785522
+     Process time: 98.171875
+10 clusters
+     Wall time: 14.341893672943115
+     Process time: 96.796875
+15 clusters
+     Wall time: 14.34622073173523
+     Process time: 97.609375
+20 clusters
+     Wall time: 14.810744524002075
+     Process time: 98.515625Benchmark 12/05/2020, 01:27:03
+5 clusters
+     Wall time: 14.214190244674683
+     Process time: 95.75
+10 clusters
+     Wall time: 14.331603765487671
+     Process time: 94.625
+15 clusters
+     Wall time: 14.116168975830078
+     Process time: 95.390625
+20 clusters
+     Wall time: 14.322953462600708
+     Process time: 98.5

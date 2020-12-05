@@ -45,7 +45,11 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
    dataset = pd.concat([dataset], ignore_index=True)
 
 #~400 entries limite superiore per KernelKmeans
-   subset = dataset.head(n = math.floor(len(dataset.index)*0.09))
+   if algorithm == 'KernelKmeans':
+      subset = dataset.head(n = 400)
+   else:
+      subset = dataset.head(n = math.floor(len(dataset.index)*0.09))
+
    # subset = subset.transpose()
    subset = subset.to_numpy().astype('float32')
    
@@ -53,8 +57,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
    if not os.path.isdir('./Clustering/'+device):
       os.makedirs('./Clustering/'+device)
 
-   if os.path.exists('./Clustering/'+device+'/benchmark-'+algorithm+'.txt'):
-      os.remove('./Clustering/'+device+'/benchmark-'+algorithm+'.txt')
+
    
    benchmark = open('./Clustering/'+device+'/benchmark-'+algorithm+'.txt', 'a+')
    benchmark.write('Benchmark ' + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
@@ -81,7 +84,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
       elif algorithm == 'Kshape':
          k = KShape(n_clusters=i,max_iter= 3, verbose = 1)
       elif algorithm == 'KernelKmeans':
-         k = KernelKMeans(n_clusters = i, max_iter = 50, n_jobs = 12, verbose = 1, n_init= 100)
+         k = KernelKMeans(n_clusters = i, max_iter = 3, n_jobs = 12, verbose = 1)
       else:
          return
 
@@ -163,5 +166,5 @@ dataset = pd.concat([dataset], ignore_index=True)
 print(dataset)
 
 
-for algorithm in ['Kmeans']:
+for algorithm in ['KernelKmeans']:
    Clustering(dataset = dataset,algorithm = algorithm, device = device)
