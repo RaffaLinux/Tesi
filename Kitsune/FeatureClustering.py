@@ -166,5 +166,5 @@ dataset = pd.concat([dataset], ignore_index=True)
 print(dataset)
 
 
-for algorithm in ['KernelKmeans']:
+for algorithm in ['Kmeans']:
    Clustering(dataset = dataset,algorithm = algorithm, device = device)
