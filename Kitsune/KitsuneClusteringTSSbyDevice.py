@@ -109,26 +109,26 @@ def dataframe_to_feature_clusters(dataframe, subset):
       if df_list[0][i] not in subset[5].keys():
          subset[5][df_list[0][i]] = [i]
       else:
-         subset[5][df_list[0][1]].append(i)
+         subset[5][df_list[0][i]].append(i)
 
    for i in range(len(df_list[1])):
       if df_list[1][i] not in subset[10].keys():
          subset[10][df_list[1][i]] = [i]
       else:
-         subset[10][df_list[1][1]].append(i)
+         subset[10][df_list[1][i]].append(i)
 
    for i in range(len(df_list[2])):
       if df_list[2][i] not in subset[15].keys():
          subset[15][df_list[2][i]] = [i]
       else:
-         subset[15][df_list[2][1]].append(i)
+         subset[15][df_list[2][i]].append(i)
    
    for i in range(len(df_list[3])):
       if df_list[3][i] not in subset[20].keys():
          subset[20][df_list[3][i]] = [i]
       else:
-         subset[20][df_list[3][1]].append(i)
-         
+         subset[20][df_list[3][i]].append(i)
+
    merge_1feature_clusters(subset[5])
    merge_1feature_clusters(subset[10])
    merge_1feature_clusters(subset[15])
