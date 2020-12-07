@@ -8,6 +8,7 @@ import progressbar
 import numpy as np
 import tensorflow as tf
 import time
+from pandas import DataFrame
 from tslearn.clustering import TimeSeriesKMeans
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Input,Dense,Dropout
@@ -60,7 +61,7 @@ t_process_overall = time.process_time()
 
 #Lettura del dataset dai csv
 def load_dataset(dataset, dev: Device = None):
-   os.chdir('./Kitsune-Testa')
+   os.chdir('./Kitsune')
    dataset = dict()
    dataset_path = "./Dataset/"
    progress = 0
@@ -88,37 +89,50 @@ def load_dataset(dataset, dev: Device = None):
       bar.update(progress)
    bar.finish()
 
-def dataframe_to_feature_clusters(dataframe : Dataframe, subset):
-   subset[5] = {}
-   subset[10] = {}
-   subset[15] = {}
-   subset[20] = {}
+def merge_1feature_clusters(clusters):
+   for i in clusters.copy().keys(): #Python non ti fa iterare su un dizionario che viene modificato, in questo linguaggio qualunque cosa scrivi funziona ma questo no
+      if len(clusters[i]) <= 1: #Ovviamente è == 1 in pratica, ma why not
+         for j in clusters.copy().keys():
+            if clusters[j] is not clusters[i] and len(clusters[j]) <= 1: #Cerchiamo altri elementi con un solo elemento
+               clusters[i].append(clusters[j][0])
+               del(clusters[j]) #Eliminazione cluster degenere
+         break #Una volta accorpati gli altri cluster degeneri nel primo cluster degenere trovato è inutile continuare
+
+def dataframe_to_feature_clusters(dataframe, subset):
+   subset[5] = dict()
+   subset[10] = dict()
+   subset[15] = dict()
+   subset[20] = dict()
    
    df_list = dataframe.values.tolist()
    for i in range(len(df_list[0])):
-      if subset[5][df_list[0][i]] == None:
+      if df_list[0][i] not in subset[5].keys():
          subset[5][df_list[0][i]] = [i]
       else:
          subset[5][df_list[0][1]].append(i)
 
    for i in range(len(df_list[1])):
-      if subset[10][df_list[1][i]] == None:
+      if df_list[1][i] not in subset[10].keys():
          subset[10][df_list[1][i]] = [i]
       else:
          subset[10][df_list[1][1]].append(i)
 
    for i in range(len(df_list[2])):
-      if subset[15][df_list[2][i]] == None:
+      if df_list[2][i] not in subset[15].keys():
          subset[15][df_list[2][i]] = [i]
       else:
-         subset[15][df_list[0][1]].append(i)
+         subset[15][df_list[2][1]].append(i)
    
    for i in range(len(df_list[3])):
-      if subset[20][df_list[3][i]] == None:
+      if df_list[3][i] not in subset[20].keys():
          subset[20][df_list[3][i]] = [i]
       else:
          subset[20][df_list[3][1]].append(i)
-   
+         
+   merge_1feature_clusters(subset[5])
+   merge_1feature_clusters(subset[10])
+   merge_1feature_clusters(subset[15])
+   merge_1feature_clusters(subset[20])
 
 
 def load_features_clusters(features_clusters, device: Device):
@@ -150,9 +164,11 @@ if len(sys.argv) > 2:
    device = Device(int(sys.argv[1]))
    load_dataset(device_dataset, device)
 else:
+   print(sys.argv)
    sys.exit('Add a device as argument (0...9) and algorithm to launch this script')
 
 features_clusters = dict()
+load_features_clusters(features_clusters, device)
 
 device_benign = device_dataset['benign_traffic']
 device_benign = device_benign.sample(frac = 1) #ELIMINARE IN FASE FINALE
