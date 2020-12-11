@@ -1,0 +1,43 @@
+
+Benchmark 12/09/2020, 15:45:59
+Benchmark 12/09/2020, 21:04:57
+Benchmark 12/09/2020, 21:08:53
+Benchmark 12/09/2020, 21:13:11
+Benchmark 12/09/2020, 21:28:39
+Benchmark 12/09/2020, 21:32:31
+Benchmark 12/09/2020, 21:33:43
+Benchmark 12/09/2020, 21:34:07
+Benchmark 12/09/2020, 21:38:28
+Benchmark 12/09/2020, 21:45:01
+Benchmark 12/09/2020, 21:45:56
+Benchmark 12/09/2020, 21:46:22
+Benchmark 12/10/2020, 02:11:34
+Benchmark 12/10/2020, 02:12:12
+Benchmark 12/10/2020, 02:13:46
+Benchmark 12/10/2020, 12:22:27
+Benchmark 12/10/2020, 12:22:52
+Benchmark 12/10/2020, 12:23:40
+Benchmark 12/10/2020, 12:32:49
+Benchmark 12/10/2020, 12:33:52
+Benchmark 12/10/2020, 12:34:32
+Benchmark 12/10/2020, 12:35:11
+Benchmark 12/10/2020, 12:37:42
+Benchmark 12/10/2020, 12:43:19
+Benchmark 12/10/2020, 12:49:49
+Benchmark 12/10/2020, 15:17:45
+5 clusters
+     Wall time: 1171.2700057029724
+     Process time: 1170.5
+10 clusters
+     Wall time: 5271.614558696747
+     Process time: 4596.953125
+Benchmark 12/10/2020, 19:21:02
+5 clusters
+     Wall time: 1727.6255292892456
+     Process time: 1673.078125
+10 clusters
+     Wall time: 4250.173531293869
+     Process time: 4078.015625
+15 clusters
+     Wall time: 7382.691466093063
+     Process time: 7069.015625

@@ -48,7 +48,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
    if algorithm == 'KernelKmeans':
       subset = dataset.head(n = 400)
    else:
-      subset = dataset.head(n = math.floor(len(dataset.index)*0.09))
+      subset = dataset.head(n = 2048)
 
    # subset = subset.transpose()
    subset = subset.to_numpy().astype('float32')
@@ -60,7 +60,8 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
 
    
    benchmark = open('./Clustering/'+device+'/benchmark-'+algorithm+'.txt', 'a+')
-   benchmark.write('Benchmark ' + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
+   benchmark.write('\nBenchmark ' + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
+   benchmark.close()
 
 
    for i in [5,10,15,20]:
@@ -94,9 +95,11 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
 
       wall_clustering_time = time.time() - wall_time
       process_clustering_time = time.process_time() - process_time
+      benchmark = open('./Clustering/'+device+'/benchmark-'+algorithm+'.txt', 'a+')
       benchmark.write('\n'+str(i)+ ' clusters')
       benchmark.write('\n     Wall time: ' + str(wall_clustering_time))
       benchmark.write('\n     Process time: ' + str (process_clustering_time))
+      benchmark.close()
 
       results.loc[len(results)] = k.labels_.tolist()
       plt.figure(figsize= (15,15))
@@ -118,7 +121,6 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
    
    print(results)
    results.to_csv('./Clustering/'+device+'/'+algorithm+'.csv', index = False, sep = ',')
-   benchmark.close()
    
    return results
 
