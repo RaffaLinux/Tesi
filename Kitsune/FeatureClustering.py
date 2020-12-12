@@ -11,6 +11,7 @@ from tslearn.clustering import TimeSeriesKMeans, KShape, KernelKMeans
 from sklearn.preprocessing import MinMaxScaler
 from tslearn.preprocessing import TimeSeriesScalerMinMax
 from matplotlib import pyplot as plt
+from matplotlib.pyplot import legend
 from enum import Enum
 
 class Device(Enum):
@@ -65,8 +66,8 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
 
 
    for i in [5,10,15,20]:
-      wall_time = time.time()
-      process_time = time.process_time()
+      # wall_time = time.time()
+      # process_time = time.process_time()
 
       clustering = subset[:, :116]
       clustering_features = clustering[:,:115]
@@ -82,16 +83,21 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
 
       if algorithm == 'Kmeans':
          k = TimeSeriesKMeans(n_clusters=i, metric="softdtw", max_iter=3, verbose=1, n_jobs = 12, max_iter_barycenter = 3)
+         #k = TimeSeriesKMeans.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
       elif algorithm == 'Kshape':
          k = KShape(n_clusters=i,max_iter= 3, verbose = 1)
+         #k = KShape.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
       elif algorithm == 'KernelKmeans':
          k = KernelKMeans(n_clusters = i, max_iter = 3, n_jobs = 12, verbose = 1)
+         #k = KernelKMeans.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
       else:
          return
 
       y_pred = k.fit_predict(clustering_features)
       k.to_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
       print("A loop has been completed")
+
+      save_image(device, algorithm, i, k, y_pred, clustering_features)
 
       wall_clustering_time = time.time() - wall_time
       process_clustering_time = time.process_time() - process_time
@@ -101,29 +107,45 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
       benchmark.write('\n     Process time: ' + str (process_clustering_time))
       benchmark.close()
 
-      results.loc[len(results)] = k.labels_.tolist()
-      plt.figure(figsize= (15,15))
-      sz = clustering_features.shape[1]
-
-      for yi in range(i):
-         plt.subplot(i, 1, 1 + yi,)
-         for xx in clustering_features[y_pred == yi]:
-            plt.plot(xx.ravel(), "k-", alpha=.2)
-         plt.xlim(0, sz)
-         plt.ylim(0, 1)
-         plt.text(1, 0.50,'Cluster %d' % (yi),transform=plt.gca().transAxes, fontsize = 'small')
-         if yi == 1:
-            plt.title(algorithm)
-      
-
-      plt.tight_layout()
-      plt.savefig('./Clustering/'+device+'/'+algorithm+str(i)+'.png', dpi = 300)
    
+   results.loc[len(results)] = k.labels_.tolist()
    print(results)
    results.to_csv('./Clustering/'+device+'/'+algorithm+'.csv', index = False, sep = ',')
    
    return results
 
+
+def save_image(device, algorithm, i, k, y_pred, clustering_features):
+   redline = None
+   plt.figure(figsize= (15,15))
+   sz = clustering_features.shape[1]
+   extra_artists = []
+
+   for yi in range(i):
+      plt.subplot(i, 1, 1 + yi,)
+      for xx in clustering_features[y_pred == yi]:
+         plt.plot(xx.ravel(), "k-", alpha=.2)
+      if algorithm != 'KernelKmeans':
+         redline = plt.plot(k.cluster_centers_[yi].ravel(), "r-", linewidth = 0.65)
+      plt.xlim(0, sz)
+      plt.ylim(0, 1)
+      extra_artists.append(plt.text(1.01, 0.50,'Cluster %d' % (yi),transform=plt.gca().transAxes, fontsize = 'large'))
+
+   if algorithm == 'Kmeans':
+      stl = plt.suptitle('K-means', fontsize = 'xx-large')
+   elif algorithm == 'Kshape':
+      stl = plt.suptitle('K-Shape', fontsize = 'xx-large')
+   else:
+         stl = plt.suptitle('Kernel K-means', fontsize = 'xx-large')
+
+   if algorithm != 'KernelKmeans':
+      lgd = plt.figlegend((redline), ["Cluster centroid"],bbox_to_anchor = (0.5,-0.04), loc = 'lower center', fontsize = 'x-large', fancybox = True, frameon = True)
+      lgd.get_frame().set_edgecolor('k')
+      extra_artists.append(lgd)
+
+   extra_artists.append(stl)
+   plt.tight_layout()
+   plt.savefig('./Clustering/'+device+'/'+algorithm+str(i)+'.svg', bbox_extra_artists = extra_artists, bbox_inches = 'tight')#, dpi = 300)
 
 
 
@@ -168,5 +190,5 @@ dataset = pd.concat([dataset], ignore_index=True)
 print(dataset)
 
 
-for algorithm in ['Kmeans']:
+for algorithm in ['KernelKmeans','Kshape', 'Kmeans']:
    Clustering(dataset = dataset,algorithm = algorithm, device = device)

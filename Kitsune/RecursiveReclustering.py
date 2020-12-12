@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 import time
 from pandas import DataFrame
-from tslearn.clustering import TimeSeriesKMeans
+from tslearn.clustering import TimeSeriesKMeans, KShape, KernelKMeans
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Input,Dense,Dropout
 from matplotlib import pyplot as plt
@@ -75,14 +75,28 @@ def load_dataset(dataset, dev: Device = None):
       bar.update(progress)
    bar.finish()
 
-def reclustering(clusters, device, algorithm):
+def reclustering(clusters, device, algorithm, initial_clusters):
    n_dClusters = 0 #Numero di clusters degeneri
+   n_clusters = len(clusters)
 
    for i in clusters.copy().keys():
       if len(clusters[i]) <= 1: #Ovviamente è == 1 in pratica, ma why not
          n_dClusters += 1
 
    if n_dClusters == 0: return
+
+   target_cluster_size = n_clusters-n_dClusters
+
+   if algorithm == 'Kmeans':
+      k = TimeSeriesKMeans.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
+   elif algorithm == 'Kshape':
+      k = KShape.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
+   elif algorithm == 'KernelKmeans':
+      k = KernelKMeans.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
+   else:
+      return
+
+
    
 
 def dataframe_to_feature_clusters(dataframe, subset, device, algorithm):
@@ -116,10 +130,10 @@ def dataframe_to_feature_clusters(dataframe, subset, device, algorithm):
       else:
          subset[20][df_list[3][i]].append(i)
 
-   reclustering(subset[5], device, algorithm)
-   reclustering(subset[10], device, algorithm)
-   reclustering(subset[15], device, algorithm)
-   reclustering(subset[20], device, algorithm)
+   reclustering(subset[5], device, algorithm,5)
+   reclustering(subset[10], device, algorithm, 10)
+   reclustering(subset[15], device, algorithm, 15)
+   reclustering(subset[20], device, algorithm, 20)
 
 
 def load_features_clusters(features_clusters, device: Device):
