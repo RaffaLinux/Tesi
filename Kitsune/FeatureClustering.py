@@ -66,8 +66,8 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
 
 
    for i in [5,10,15,20]:
-      # wall_time = time.time()
-      # process_time = time.process_time()
+      wall_time = time.time()
+      process_time = time.process_time()
 
       clustering = subset[:, :116]
       clustering_features = clustering[:,:115]
@@ -95,6 +95,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
 
       y_pred = k.fit_predict(clustering_features)
       k.to_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
+      #y_pred = k.predict(clustering_features)
       print("A loop has been completed")
 
       save_image(device, algorithm, i, k, y_pred, clustering_features)
@@ -125,8 +126,13 @@ def save_image(device, algorithm, i, k, y_pred, clustering_features):
       plt.subplot(i, 1, 1 + yi,)
       for xx in clustering_features[y_pred == yi]:
          plt.plot(xx.ravel(), "k-", alpha=.2)
-      if algorithm != 'KernelKmeans':
+      if algorithm == 'Kmeans':
          redline = plt.plot(k.cluster_centers_[yi].ravel(), "r-", linewidth = 0.65)
+      elif algorithm == 'Kshape':
+         scaler = MinMaxScaler(feature_range = (0,1))
+         centroids = scaler.fit_transform(k.cluster_centers_[yi])
+         #centroids = k.cluster_centers_[yi]
+         redline = plt.plot(centroids.ravel(), "r-", linewidth = 0.65)
       plt.xlim(0, sz)
       plt.ylim(0, 1)
       extra_artists.append(plt.text(1.01, 0.50,'Cluster %d' % (yi),transform=plt.gca().transAxes, fontsize = 'large'))
@@ -139,7 +145,10 @@ def save_image(device, algorithm, i, k, y_pred, clustering_features):
          stl = plt.suptitle('Kernel K-means', fontsize = 'xx-large')
 
    if algorithm != 'KernelKmeans':
-      lgd = plt.figlegend((redline), ["Cluster centroid"],bbox_to_anchor = (0.5,-0.04), loc = 'lower center', fontsize = 'x-large', fancybox = True, frameon = True)
+      if algorithm == 'Kmeans':
+         lgd = plt.figlegend((redline), ["Cluster centroid"],bbox_to_anchor = (0.5,-0.04), loc = 'lower center', fontsize = 'x-large', fancybox = True, frameon = True)
+      elif algorithm == 'Kshape':
+         lgd = plt.figlegend((redline), ["Cluster centroid (scaled)"],bbox_to_anchor = (0.5,-0.04), loc = 'lower center', fontsize = 'x-large', fancybox = True, frameon = True)
       lgd.get_frame().set_edgecolor('k')
       extra_artists.append(lgd)
 
@@ -190,5 +199,5 @@ dataset = pd.concat([dataset], ignore_index=True)
 print(dataset)
 
 
-for algorithm in ['KernelKmeans','Kshape', 'Kmeans']:
+for algorithm in ['Kshape']:
    Clustering(dataset = dataset,algorithm = algorithm, device = device)

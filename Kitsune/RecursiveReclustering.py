@@ -75,7 +75,12 @@ def load_dataset(dataset, dev: Device = None):
       bar.update(progress)
    bar.finish()
 
-def reclustering(clusters, device, algorithm, initial_clusters):
+#Questa funzione effettua chiamate ricorsive per il reclustering delle features nei cluster degeneri finché ogni cluster degenere non è stato eliminato.
+#Per K-means viene sfruttata l'idea che i centroidi di ogni cluster descrivono una serie temporale data dal baricentro (media) dei segnali descritti dalle features del cluster
+#Per K-shape i centroidi descrivono invece un massimizzante delle similarità tra le varie features del cluster, ossia un segnale che riesca essere simile quanto più possibile a tutte le features
+#notare, per la chiarezza della funzione, che un massimizzante per un cluster degenere è la singola feature di quel cluster degenere.
+
+def reclustering(clusters, device, algorithm, initial_clusters, n_iter = 0):
    n_dClusters = 0 #Numero di clusters degeneri
    n_clusters = len(clusters)
 
@@ -87,14 +92,24 @@ def reclustering(clusters, device, algorithm, initial_clusters):
 
    target_cluster_size = n_clusters-n_dClusters
 
-   if algorithm == 'Kmeans':
-      k = TimeSeriesKMeans.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
-   elif algorithm == 'Kshape':
-      k = KShape.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
-   elif algorithm == 'KernelKmeans':
-      k = KernelKMeans.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
+   if n_iter == 0:
+      if algorithm == 'Kmeans':
+         k = TimeSeriesKMeans.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
+      elif algorithm == 'Kshape':
+         k = KShape.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
+      elif algorithm == 'KernelKmeans':
+         k = KernelKMeans.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'.json')
+      else:
+         raise NameError('Undefined algorithm')
    else:
-      return
+      if algorithm == 'Kmeans':
+         k = TimeSeriesKMeans.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'Recluster'+str(n_iter)+'.json')
+      elif algorithm == 'Kshape':
+         k = KShape.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'Recluster'+str(n_iter)+'.json')
+      elif algorithm == 'KernelKmeans':
+         k = KernelKMeans.from_json('./Clustering/'+device+'/'+algorithm+str(i)+'Recluster'+str(n_iter)+'.json')
+      else:
+         raise NameError('Undefined algorithm')
 
 
    
