@@ -152,7 +152,7 @@ device_all = np.concatenate([device_benign,device_malign], axis = 0)
 
 
 
-tss = TimeSeriesSplit(10)
+tss = TimeSeriesSplit(5)
 
 device = device.name
 for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
@@ -160,7 +160,7 @@ for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
       n_autoencoder = len(clusters[device][algorithm][key]) #NB: key è il numero di clusters su cui è stato impostato l'algoritmo, il numero reale di cluster usati dall'algoritmo spesso è minore
       iteration = 0
       for train_index, test_index in tss.split(device_benign, device_benign[:,116]):
-         with tf.device('/gpu:0'):
+         with tf.device('/cpu:0'):
             print("Train:", train_index, "Test:", test_index)
             train_index = train_index.astype('int32')
             test_index = test_index.astype('int32')
@@ -228,7 +228,7 @@ for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
 
 
             #FASE DI TESTING SKF on TSS
-            skf = StratifiedKFold(10)
+            skf = StratifiedKFold(5)
             
 
             skf_iteration = 0
