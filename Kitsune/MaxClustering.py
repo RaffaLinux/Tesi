@@ -45,7 +45,7 @@ class Attack(Enum):
    mirai_udp = 9
    mirai_udpplain = 10
 
-CLUSTERS_MAX = 30
+CLUSTERS_MAX = 40
 
 #Lettura del dataset dai csv
 def load_dataset(dataset, dev: Device = None):
@@ -256,7 +256,6 @@ else:
    print(sys.argv)
    sys.exit('Add a device as argument (0...9) and algorithm to launch this script')
 
-print(dataset)
 device = device.name
 device_dataset = dataset[device]
 device_benign = device_dataset['benign_traffic']
@@ -277,6 +276,20 @@ dataframe_to_feature_clusters(dataframes[2], features_clusters['KernelKmeans'],d
 # reclustering(subset[5], device, algorithm,5)
 # reclustering(subset[10], device, algorithm, 10)
 # reclustering(subset[15], device, algorithm, 15)
-new_clusters = find_max_clustering(features_clusters['Kshape'][10], device, 'Kshape', dataset, 10)
+
+if check_cluster_degeneri(features_clusters['Kmeans'][20]) == False:
+   print('Starting from 20')
+   new_clusters = find_max_clustering(features_clusters['Kmeans'][20], device, 'Kmeans', dataset, 20)
+elif check_cluster_degeneri(features_clusters['Kmeans'][15]) == False:
+   print('Starting from 15')
+   new_clusters = find_max_clustering(features_clusters['Kmeans'][15], device, 'Kmeans', dataset, 15)
+elif check_cluster_degeneri(features_clusters['Kmeans'][10]) == False:
+   print('Starting from 10')
+   new_clusters = find_max_clustering(features_clusters['Kmeans'][10], device, 'Kmeans', dataset, 10)
+else:
+   print('Starting from 5')
+   new_clusters = find_max_clustering(features_clusters['Kmeans'][5], device, 'Kmeans', dataset, 5)
+
+
 
 

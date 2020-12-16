@@ -1,0 +1,6 @@
+Benchmark 12/04/2020, 14:43:33
+
+5 cluster: 1112s
+10 cluster: 2230s
+15 cluster: 3400s
+20 cluster: 7100s
