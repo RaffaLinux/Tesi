@@ -277,18 +277,19 @@ dataframe_to_feature_clusters(dataframes[2], features_clusters['KernelKmeans'],d
 # reclustering(subset[10], device, algorithm, 10)
 # reclustering(subset[15], device, algorithm, 15)
 
-if check_cluster_degeneri(features_clusters['Kmeans'][20]) == False:
-   print('Starting from 20')
-   new_clusters = find_max_clustering(features_clusters['Kmeans'][20], device, 'Kmeans', dataset, 20)
-elif check_cluster_degeneri(features_clusters['Kmeans'][15]) == False:
-   print('Starting from 15')
-   new_clusters = find_max_clustering(features_clusters['Kmeans'][15], device, 'Kmeans', dataset, 15)
-elif check_cluster_degeneri(features_clusters['Kmeans'][10]) == False:
-   print('Starting from 10')
-   new_clusters = find_max_clustering(features_clusters['Kmeans'][10], device, 'Kmeans', dataset, 10)
-else:
-   print('Starting from 5')
-   new_clusters = find_max_clustering(features_clusters['Kmeans'][5], device, 'Kmeans', dataset, 5)
+for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
+   if check_cluster_degeneri(features_clusters[algorithm][20]) == False:
+      print('Starting from 20')
+      new_clusters = find_max_clustering(features_clusters[algorithm][20], device, algorithm, dataset, 20)
+   elif check_cluster_degeneri(features_clusters[algorithm][15]) == False:
+      print('Starting from 15')
+      new_clusters = find_max_clustering(features_clusters[algorithm][15], device, algorithm, dataset, 15)
+   elif check_cluster_degeneri(features_clusters[algorithm][10]) == False:
+      print('Starting from 10')
+      new_clusters = find_max_clustering(features_clusters[algorithm][10], device, algorithm, dataset, 10)
+   else:
+      print('Starting from 5')
+      new_clusters = find_max_clustering(features_clusters[algorithm][5], device, algorithm, dataset, 5)
 
 
 
