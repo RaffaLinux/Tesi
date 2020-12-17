@@ -156,7 +156,7 @@ device_dataset = load_dataset(device)[device.name]
 clusters = load_clusters()
 
 device_benign = device_dataset['benign_traffic']
-#device_benign = device_benign.sample(frac = 1) #ELIMINARE IN FASE FINALE O SETTARE A 1
+#device_benign = device_benign.sample(frac = 1) #ELIMINARE IN FASE FINALE
 device_benign = pd.concat([device_benign], ignore_index=True)
 print(device_benign)
 device_benign = device_benign.to_numpy()
@@ -164,7 +164,7 @@ device_benign = device_benign.astype('float32')
 
 
 device_malign = pd.concat([value for key, value in device_dataset.items() if key not in ('benign_traffic')], ignore_index=True)
-#device_malign = device_malign.sample(frac = 1) #ELIMINARE IN FASE FINALE O SETTARE A 1
+#device_malign = device_malign.sample(frac = 1) #ELIMINARE IN FASE FINALE
 device_malign = device_malign.to_numpy().astype('float32')
 device_benign = np.concatenate([device_benign], axis = 0)
 device_all = np.concatenate([device_benign,device_malign], axis = 0)
@@ -182,7 +182,7 @@ for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
          print("\nSkipping "+algorithm+" "+key+" because of one feature clusters.")
       else:
          n_autoencoder = len(clusters[device][algorithm][key]) #NB: key è il numero di clusters su cui è stato impostato l'algoritmo, il numero reale di cluster usati dall'algoritmo spesso è minore
-         iteration = 0
+         tss_iteration = 0
 
          for train_index, test_index in tss.split(device_benign, device_benign[:,116]):
             with tf.device('/cpu:0'):
@@ -260,7 +260,7 @@ for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
                   RMSE[i]= np.sqrt(metrics.mean_squared_error(pred[i],test_score[i]))
                
                
-               StampaValori(device,algorithm,key, iteration, test_index, test_labels, RMSE)
+               StampaValori(device,algorithm,key, tss_iteration, test_index, test_labels, RMSE)
 
 
                #FASE DI TESTING SKF+TSS
@@ -268,7 +268,7 @@ for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
                
 
                skf_iteration = 0
-               
+
                for train_index_skf, test_index_skf in skf.split(device_malign, device_malign[:,115]):
                   device_mix = np.concatenate([testing, device_malign[test_index_skf, : 118]], axis = 0)
                   test_features_skf = device_mix[ :, : 115]
@@ -290,7 +290,7 @@ for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
                   for i in range(test_score_skf.shape[0]):
                      RMSE[i]= np.sqrt(metrics.mean_squared_error(pred[i],test_score_skf[i]))
 
-                  StampaValoriKFold(device,algorithm,key,iteration,skf_iteration, test_labels_skf, RMSE)
+                  StampaValoriKFold(device,algorithm,key,tss_iteration,skf_iteration, test_labels_skf, RMSE)
                   skf_iteration=skf_iteration+1
                
-               iteration = iteration+1
+               tss_iteration = tss_iteration+1
