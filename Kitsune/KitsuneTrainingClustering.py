@@ -50,7 +50,7 @@ def StampaValori(device,algorithm, n_clusters,iteration):
    if not os.path.isdir('./Testing/'+device+'/'+algorithm+str(n_clusters)):
       os.makedirs('./Testing/'+device+'/'+algorithm+str(n_clusters))
 
-   dataset.to_csv('./Testing/'+device+'/'+algorithm+str(n_clusters)+'/TSS'+str(iteration+1)+'.csv',index=False, sep=',')
+   dataset.to_csv('./Testing/'+device+'/'+algorithm+str(n_clusters)+'/TSS'+str(iteration)+'.csv',index=False, sep=',')
 
 def StampaValoriKFold(device,algorithm,n_clusters,tss_iteration,skf_iteration):
    dataset=pd.DataFrame({'Maligno': test_labels_skf[:,0],'Dispositivo': test_labels_skf[:,2], 'TipologiaAttacco': test_labels_skf[:,1],'RMSE:': RMSE})
@@ -58,7 +58,7 @@ def StampaValoriKFold(device,algorithm,n_clusters,tss_iteration,skf_iteration):
    if not os.path.isdir('./Testing/'+device+'/'+algorithm+str(n_clusters)):
       os.makedirs('./Testing/'+device+'/'+algorithm+str(n_clusters))
 
-   dataset.to_csv('./Testing/'+device+'/'+algorithm+str(n_clusters)+'/TSS'+str(tss_iteration+1)+'Fold'+str(skf_iteration)+'.csv',index=False, sep=',')
+   dataset.to_csv('./Testing/'+device+'/'+algorithm+str(n_clusters)+'/TSS'+str(tss_iteration)+'Fold'+str(skf_iteration)+'.csv',index=False, sep=',')
 
 
 
