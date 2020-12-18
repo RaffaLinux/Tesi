@@ -47,19 +47,10 @@ class Attack(Enum):
 def StampaValori(device,algorithm, n_clusters,iteration, index, labels, RMSE):
    dataset=pd.DataFrame({'Indice': index,'Maligno': labels[:,0], 'Dispositivo': labels[:,2], 'TipologiaAttacco': labels[:,1],'RMSE:': RMSE})
 
-   if not os.path.isdir('./TSS+SKF/'+device+'/'+algorithm+str(n_clusters)):
-      os.makedirs('./TSS+SKF/'+device+'/'+algorithm+str(n_clusters))
+   if not os.path.isdir('./SKF/'+device+'/'+algorithm+str(n_clusters)):
+      os.makedirs('./SKF/'+device+'/'+algorithm+str(n_clusters))
 
-   dataset.to_csv('./TSS+SKF/'+device+'/'+algorithm+str(n_clusters)+'/TSS'+str(iteration)+'.csv',index=False, sep=',')
-
-def StampaValoriKFold(device,algorithm,n_clusters,tss_iteration,skf_iteration, labels, RMSE): #Qui non ci sono gli indici a causa del mix TSS+SKF
-   dataset=pd.DataFrame({'Maligno': labels[:,0],'Dispositivo': labels[:,2], 'TipologiaAttacco': labels[:,1],'RMSE:': RMSE})
-
-   if not os.path.isdir('./TSS+SKF/'+device+'/'+algorithm+str(n_clusters)):
-      os.makedirs('./TSS+SKF/'+device+'/'+algorithm+str(n_clusters))
-
-   dataset.to_csv('./TSS+SKF/'+device+'/'+algorithm+str(n_clusters)+'/TSS'+str(tss_iteration)+'Fold'+str(skf_iteration)+'.csv',index=False, sep=',')
-
+   dataset.to_csv('./SKF/'+device+'/'+algorithm+str(n_clusters)+'/SKF'+str(iteration)+'.csv',index=False, sep=',')
 
 
 
@@ -107,7 +98,7 @@ def load_clusters():
 
       for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
          clusters[device.name][algorithm] = dict()
-         json_paths_1 = glob.glob(clusters_path+device.name+'/Reclustering/'+algorithm+'/*.json')
+         json_paths_1 = glob.glob(clusters_path+device.name+'/'+algorithm+'/*.json')
          
          for json_path in json_paths_1:
             if algorithm == 'Kshape':
@@ -158,6 +149,7 @@ clusters = load_clusters()
 device_benign = device_dataset['benign_traffic']
 #device_benign = device_benign.sample(frac = 1) #ELIMINARE IN FASE FINALE
 device_benign = pd.concat([device_benign], ignore_index=True)
+device_benign = device_benign.iloc[2048:]
 print(device_benign)
 device_benign = device_benign.to_numpy()
 device_benign = device_benign.astype('float32')
@@ -166,34 +158,41 @@ device_benign = device_benign.astype('float32')
 device_malign = pd.concat([value for key, value in device_dataset.items() if key not in ('benign_traffic')], ignore_index=True)
 #device_malign = device_malign.sample(frac = 1) #ELIMINARE IN FASE FINALE
 device_malign = device_malign.to_numpy().astype('float32')
+np.random.shuffle(device_malign)
+np.random.seed()
 device_benign = np.concatenate([device_benign], axis = 0)
 device_all = np.concatenate([device_benign,device_malign], axis = 0)
+np.random.shuffle(device_all)
+np.random.seed()
 
 
 
-tss = TimeSeriesSplit(5)
+skf = StratifiedKFold(n_splits = 10, shuffle = True, random_state = 0)
 
 device = device.name
 
 for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
    for key in clusters[device][algorithm].keys():
 
-      if check_cluster_degeneri(clusters[device][algorithm][key]):
-         print("\nSkipping "+algorithm+" "+key+" because of one feature clusters.")
+      if check_cluster_degeneri(clusters[device][algorithm][key]): #Double check per i cluster degeneri
+         print("\nSkipping "+algorithm+" "+str(key)+" because of one feature clusters.")
       else:
+
+         print("\nTraining "+algorithm+" "+str(key))
          n_autoencoder = len(clusters[device][algorithm][key]) #NB: key è il numero di clusters su cui è stato impostato l'algoritmo, il numero reale di cluster usati dall'algoritmo spesso è minore
          tss_iteration = 0
 
-         for train_index, test_index in tss.split(device_benign, device_benign[:,116]):
+         for train_index, test_index in skf.split(device_all, device_all[:,116]):
             with tf.device('/cpu:0'):
                print("Train:", train_index, "Test:", test_index)
                train_index = train_index.astype('int32')
                test_index = test_index.astype('int32')
-               training = device_benign[train_index, :116]
+               training = device_all[train_index, :116]
+               training = training[(training[:,115] == 0)] #Selezione dataset benevolo per il training
                training_features = training[:,:115]
                training_labels = training[:, 115]
                training_labels = training_labels.astype('int')
-               testing = device_benign[test_index, : 118]
+               testing = device_all[test_index, : 118]
                test_features = device_all[test_index, : 115]
                test_labels = device_all[test_index, 115:118]
                test_labels = test_labels.astype('int')
@@ -261,36 +260,5 @@ for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
                
                
                StampaValori(device,algorithm,key, tss_iteration, test_index, test_labels, RMSE)
-
-
-               #FASE DI TESTING SKF+TSS
-               skf = StratifiedKFold(5)
-               
-
-               skf_iteration = 0
-
-               for train_index_skf, test_index_skf in skf.split(device_malign, device_malign[:,115]):
-                  device_mix = np.concatenate([testing, device_malign[test_index_skf, : 118]], axis = 0)
-                  test_features_skf = device_mix[ :, : 115]
-                  test_labels_skf = device_mix[ : , 115:118]
-                  test_labels_skf = test_labels_skf.astype('int')
-
-                  test_features_skf=scaler1.transform(test_features_skf)
-                  test_score_skf=np.zeros((test_features_skf.shape[0],n_autoencoder))
-
-                  for j, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()):
-                     pred=Ensemble[j].predict(test_features_skf[:,cluster_elements])
-                     for i in range(test_features_skf.shape[0]):
-                        test_score_skf[i,j]= np.sqrt(metrics.mean_squared_error(pred[i],test_features_skf[i,cluster_elements]))
-                  
-                  test_score_skf = scaler2.transform(test_score_skf)
-                  RMSE=np.zeros(test_score_skf.shape[0])
-                  pred=Output.predict(test_score_skf)
-
-                  for i in range(test_score_skf.shape[0]):
-                     RMSE[i]= np.sqrt(metrics.mean_squared_error(pred[i],test_score_skf[i]))
-
-                  StampaValoriKFold(device,algorithm,key,tss_iteration,skf_iteration, test_labels_skf, RMSE)
-                  skf_iteration=skf_iteration+1
                
                tss_iteration = tss_iteration+1
