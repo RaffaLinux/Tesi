@@ -2,6 +2,7 @@ import glob
 import pandas as pd
 import sys
 import math
+import pickle
 import datetime
 import os
 import progressbar
@@ -91,6 +92,19 @@ def load_clusters():
 
     return clusters
 
+def invert_dict(d): 
+    inverse = dict() 
+    for key in d: 
+        # Go through the list that is saved in the dict:
+        for item in d[key]:
+            # Check if in the inverted dict the key exists
+            if item not in inverse: 
+                # If not create a new list
+                inverse[item] = [key] 
+            else: 
+                inverse[item].append(key) 
+    return inverse
+
 os.chdir('./Kitsune')
 
 clusters = load_clusters()
@@ -107,18 +121,64 @@ t_encoder = TransactionEncoder()
 te_dictionary = t_encoder.fit(cluster_dataset).transform(cluster_dataset)
 df = pd.DataFrame(te_dictionary, columns = t_encoder.columns_)
 print(df)
-df_apriori = fpgrowth(df, min_support = 0.05, use_colnames = True)
-df_apriori['n_features'] = df_apriori['itemsets'].apply(lambda x: len(x))
-df_apriori = df_apriori[df_apriori['n_features'] > 1]
-#df_apriori = df_apriori.sort_values('n_features')
-#pd.set_option('display.max_rows', df_apriori.shape[0]+1)
-print(df_apriori)
+
+X = {}
+
+features = set(range(0,115))
+for i in range(9,1,-1):
+    min_support = i/df.shape[0] - 0.00001
+    df_apriori = fpgrowth(df, min_support = min_support, use_colnames = True)
+    df_apriori['n_features'] = df_apriori['itemsets'].apply(lambda x: len(x))
+    df_apriori = df_apriori[df_apriori['n_features'] > 1]
+    delete_set = set()
+    #Create X dict
+    for index, row in df_apriori.iterrows():
+        for elem in list(row['itemsets']):
+            if elem not in X.keys() and elem in features:
+                X[elem] = [str(index)+'iter'+str(i)]
+            elif elem in features:
+                X[elem].append(str(index)+'iter'+str(i))
+            delete_set.add(elem)
+    
+    features = features.difference(delete_set)
+print(len(X))
+Xinv = invert_dict(X)
+print(len(Xinv))
+
+
+
 
 solver = AlgorithmX(115)
-
-for index, row in df_apriori.iterrows():
+for key, value in Xinv.items():
     #print(list(row['itemsets']))
-    solver.appendRow(list(row['itemsets']), str(index))
+    solver.appendRow(value, str(key))
 
+solutions = []
 for solution in solver.solve():
-    print(solution)
+    if len(solution) < 50: 
+        print(solution)
+        solutions.append(solution)
+
+# filename = 'solutions'
+# outfile = open(filename,'wb')
+# pickle.dump(solutions,outfile)
+# outfile.close()
+# i = 0
+# for sol in solutions:
+#     if len(sol) < 25:
+#         print("\n Soluzione "+str(i))
+#         print(df_apriori.loc[map(int,sol)])
+#         i +=1
+
+
+# Y = {}
+# #Create Y dict
+# for index, row in df_apriori.iterrows():
+#     Y[index] = list(row['itemsets'])
+
+# solution = []
+
+# solve(X,Y,solution)
+# print(solution)
+# print(X)
+# print(Y)
