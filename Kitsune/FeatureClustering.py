@@ -65,7 +65,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
    benchmark.close()
 
 
-   for i in [5,10,15,20]:
+   for i in [10]:
       wall_time = time.time()
       process_time = time.process_time()
 
