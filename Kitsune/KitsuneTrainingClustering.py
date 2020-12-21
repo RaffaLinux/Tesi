@@ -171,7 +171,7 @@ skf = StratifiedKFold(n_splits = 10, shuffle = True, random_state = 0)
 
 device = device.name
 
-for algorithm in ['Kshape','KernelKmeans', 'Kmeans']:
+for algorithm in ['Kmeans']:
    for key in clusters[device][algorithm].keys():
 
       if check_cluster_degeneri(clusters[device][algorithm][key]): #Double check per i cluster degeneri
