@@ -142,7 +142,9 @@ for i in range(9,1,-1):
     
     features = features.difference(delete_set)
 print(len(X))
-Xinv = invert_dict(X)
+#Xinv = invert_dict(X)
+Xinv = dict(map(reversed, X.items()))
+
 print(len(Xinv))
 
 
