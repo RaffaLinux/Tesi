@@ -65,7 +65,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
    benchmark.close()
 
 
-   for i in [10]:
+   for i in [19]:
       wall_time = time.time()
       process_time = time.process_time()
 
@@ -199,5 +199,5 @@ dataset = pd.concat([dataset], ignore_index=True)
 print(dataset)
 
 
-for algorithm in ['Kshape']:
+for algorithm in ['Kmeans']:
    Clustering(dataset = dataset,algorithm = algorithm, device = device)
