@@ -122,30 +122,28 @@ te_dictionary = t_encoder.fit(cluster_dataset).transform(cluster_dataset)
 df = pd.DataFrame(te_dictionary, columns = t_encoder.columns_)
 print(df)
 
-X = {}
-
-features = set(range(0,115))
+df_result_apriori = pd.DataFrame()
 for i in range(9,1,-1):
+    if len(features) == 0:
+        break
     min_support = i/df.shape[0] - 0.00001
     df_apriori = fpgrowth(df, min_support = min_support, use_colnames = True)
     df_apriori['n_features'] = df_apriori['itemsets'].apply(lambda x: len(x))
     df_apriori = df_apriori[df_apriori['n_features'] > 1]
+    if i == 9:
+         df_result_apriori = df_result_apriori.reindex_like(df_apriori)
     delete_set = set()
     #Create X dict
     for index, row in df_apriori.iterrows():
-        for elem in list(row['itemsets']):
-            if elem not in X.keys() and elem in features:
-                X[elem] = [str(index)+'iter'+str(i)]
-            elif elem in features:
-                X[elem].append(str(index)+'iter'+str(i))
-            delete_set.add(elem)
+        row_set = set(row['itemsets'])
+        intersection = row_set.intersection(features)
+        if len(intersection) > 0:
+            df_result_apriori.append(row)
+        delete_set = delete_set.union(row_set)
     
     features = features.difference(delete_set)
-print(len(X))
-#Xinv = invert_dict(X)
-Xinv = dict(map(reversed, X.items()))
+print(df_result_apriori)
 
-print(len(Xinv))
 
 
 
