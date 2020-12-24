@@ -138,7 +138,7 @@ def progressive_clustering(device, algorithm, dataset, initial_clusters):
       print(clusters_temp)
       if not check_cluster_degeneri(clusters_temp):
          new_clusters = clusters_temp
-         k.to_json('./Clustering/'+device+'/Reclustering/'+algorithm+'/'+str(i)+'.json')
+         k.to_json('./Clustering/'+device+'/Reclustering/'+algorithm+'/'+str(initial_clusters)+'.json')
       else:
          print("\nALGORITHM: "+algorithm+" CLUSTERS:" + str(initial_clusters)+" "+device+" HA CLUSTER DEGENERI. RICALCOLARE")
 
@@ -257,33 +257,33 @@ features_clusters['Kmeans'] = {}
 algorithm = sys.argv[2]
 
 
-progressive_clustering(device,algorithm,dataset,19) #to delete
+#progressive_clustering(device,algorithm,dataset,10) #to delete
 
-# dataframes = load_features_clusters(device)
+dataframes = load_features_clusters(device)
 
 
-# dataframe_to_feature_clusters(dataframes[0], features_clusters['Kmeans'], device, 'Kmeans')
-# dataframe_to_feature_clusters(dataframes[1], features_clusters['Kshape'], device, 'Kshape')
-# dataframe_to_feature_clusters(dataframes[2], features_clusters['KernelKmeans'],device, 'KernelKmeans')
+dataframe_to_feature_clusters(dataframes[0], features_clusters['Kmeans'], device, 'Kmeans')
+dataframe_to_feature_clusters(dataframes[1], features_clusters['Kshape'], device, 'Kshape')
+dataframe_to_feature_clusters(dataframes[2], features_clusters['KernelKmeans'],device, 'KernelKmeans')
 
-# n_clusters_lower = int(sys.argv[3])
-# n_clusters_upper = int(sys.argv[4])
+n_clusters_lower = int(sys.argv[3])
+n_clusters_upper = int(sys.argv[4])
 
-# for i in range(n_clusters_lower,n_clusters_upper):
-#    if check_cluster_degeneri(features_clusters[algorithm][20]) == False and i == 20:
-#       print('Skipping '+algorithm+' '+str(i)+': clusters already generated')
-#       continue
-#    if check_cluster_degeneri(features_clusters[algorithm][15]) == False and i == 15:
-#       print('Skipping '+algorithm+' '+str(i)+': clusters already generated')
-#       continue
-#    if check_cluster_degeneri(features_clusters[algorithm][10]) == False and i == 10:
-#       print('Skipping '+algorithm+' '+str(i)+': clusters already generated')
-#       continue
-#    if check_cluster_degeneri(features_clusters[algorithm][5]) == False and i == 5:
-#       print('Skipping '+algorithm+' '+str(i)+': clusters already generated')
-#       continue
+for i in range(n_clusters_lower,n_clusters_upper):
+   if check_cluster_degeneri(features_clusters[algorithm][20]) == False and i == 20:
+      print('Skipping '+algorithm+' '+str(i)+': clusters already generated')
+      continue
+   if check_cluster_degeneri(features_clusters[algorithm][15]) == False and i == 15:
+      print('Skipping '+algorithm+' '+str(i)+': clusters already generated')
+      continue
+   if check_cluster_degeneri(features_clusters[algorithm][10]) == False and i == 10:
+      print('Skipping '+algorithm+' '+str(i)+': clusters already generated')
+      continue
+   if check_cluster_degeneri(features_clusters[algorithm][5]) == False and i == 5:
+      print('Skipping '+algorithm+' '+str(i)+': clusters already generated')
+      continue
    
-#    progressive_clustering(device,algorithm,dataset,i)
+   progressive_clustering(device,algorithm,dataset,i)
    
 
 
