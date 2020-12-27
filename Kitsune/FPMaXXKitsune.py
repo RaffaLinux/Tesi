@@ -94,7 +94,7 @@ def load_clusters():
    clusters = dict()
    clusters_path = './FPMaXX/'
 
-   for algorithm in ['Kmeans','Kshape','KernelKmeans']:
+   for algorithm in ['Kmeans','Kshape','KernelKmeans(schifo)']:
       clusters[algorithm] = dict()
 
       rows_file = open(clusters_path+'rows_'+algorithm, 'rb')
@@ -127,13 +127,13 @@ def fpmaxx_to_clusters(rows, solution):
 os.chdir('./Kitsune')
 dataset = dict()
 device_dataset = dict()
+clusters = load_clusters()
 dataset = load_dataset()
 all_devices_mix = DataFrame()
 all_devices_benign = DataFrame()
 all_devices_malign = DataFrame()
 for device in Device:
    device_dataset = dataset[device.name]
-   clusters = load_clusters()
 
    device_benign = device_dataset['benign_traffic']
    #device_benign = device_benign.sample(frac = 1) #ELIMINARE IN FASE FINALE
@@ -155,11 +155,11 @@ skf = StratifiedKFold(n_splits = 10, shuffle = True, random_state = 0)
 
 device = device.name
 
-for algorithm in ['Kmeans', 'Kshape', 'KernelKmeans']:
+for algorithm in ['Kshape','Kmeans', 'KernelKmeans(schifo)']:
    for key in clusters[algorithm].keys():
 
       print("\nTraining "+algorithm+" "+str(key))
-      n_autoencoder = len(clusters[device][algorithm][key]) 
+      n_autoencoder = len(clusters[algorithm][key]) 
       
       tss_iteration = 0
 
@@ -181,7 +181,7 @@ for algorithm in ['Kmeans', 'Kshape', 'KernelKmeans']:
             Ensemble = np.empty(n_autoencoder, dtype = object)
 
             #Building autoencoders & output
-            for i, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()): 
+            for i, (cluster_number, cluster_elements) in enumerate(clusters[algorithm][key].items()): 
                #index, (key, value). i = numero ordinato del cluster, cluster_number = numero assegnato dall'algoritmo (inutile), cluster_elements = lista delle features nel cluster
                n_cluster_elements = len(cluster_elements)
                Ensemble[i]= Sequential()
@@ -199,12 +199,12 @@ for algorithm in ['Kmeans', 'Kshape', 'KernelKmeans']:
             training_features=scaler1.fit_transform(training_features)
             
             #Training. [:,cluster_elements] seleziona le colonne nella lista cluster_elements
-            for i, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()):
+            for i, (cluster_number, cluster_elements) in enumerate(clusters[algorithm][key].items()):
                Ensemble[i].fit(training_features[:,cluster_elements],training_features[:,cluster_elements], epochs=1, batch_size=32)
             score=np.zeros((training_features.shape[0],n_autoencoder))
             
             #Generazione score Ensemble layer. i itera sulle entries del dataset, j sugli autoencoder/cluster
-            for j, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()):
+            for j, (cluster_number, cluster_elements) in enumerate(clusters[algorithm][key].items()):
                pred=Ensemble[j].predict(training_features[:,cluster_elements])
                for i in range(training_features.shape[0]):
                   score[i,j]= np.sqrt(metrics.mean_squared_error(pred[i],training_features[i,cluster_elements]))
@@ -227,7 +227,7 @@ for algorithm in ['Kmeans', 'Kshape', 'KernelKmeans']:
             test_features=scaler1.transform(test_features)
             test_score=np.zeros((test_features.shape[0],n_autoencoder))
 
-            for j, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()):
+            for j, (cluster_number, cluster_elements) in enumerate(clusters[algorithm][key].items()):
                pred=Ensemble[j].predict(test_features[:,cluster_elements])
                for i in range(test_features.shape[0]):
                   test_score[i,j]= np.sqrt(metrics.mean_squared_error(pred[i],test_features[i,cluster_elements]))

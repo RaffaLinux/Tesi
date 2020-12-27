@@ -73,7 +73,7 @@ def load_clusters():
     for device in Device:
         clusters[device.name] = dict()
 
-        for algorithm in ['Kmeans']:
+        for algorithm in [sys.argv[1]]:
             clusters[device.name][algorithm] = dict()
             json_paths_1 = glob.glob(clusters_path+device.name+'/'+algorithm+'/*.json')
 
@@ -131,18 +131,19 @@ for i in [9,8,7,6,5,4,3,2,1]:
     df_apriori = fpmax(df, min_support = min_support, use_colnames = True)
 
     df_apriori['n_features'] = df_apriori['itemsets'].apply(lambda x: len(x))
-    df_apriori = df_apriori[df_apriori['n_features'] > 3] #Kshape >3, Kmeans >3
+    df_apriori = df_apriori[df_apriori['n_features'] > 2] #Kshape >3, Kmeans >3, KernelKmeans > 2
     print(df_apriori)
     delete_set = set()
     #Create X dict
     for index,row in df_apriori.iterrows():
         row_set = set(row['itemsets'])
         intersection = row_set.intersection(features)
-        if len(intersection) > 0:
-            rows_List.append((list(row_set), row['support']))
+        rows_support = (list(row_set), row['support'])
+        if len(intersection) > 0 and rows_support not in rows_List :
+            rows_List.append(rows_support)
     delete_set = delete_set.union(row_set)
     print(len(rows_List))
-    #print(rows_List)
+#    print(rows_List)
     features = features.difference(delete_set)
     
 #print(rows_List)
@@ -218,7 +219,7 @@ for solution in possible_solutions:
 
             
 
-        #print((solution,support_level))
+#        print(solution)
 
 
 solutions = [biggest_clusters_weighted,biggest_clusters_mean,best_support_weighted,best_support_mean, best_10_mean, best_10_weighted]
@@ -232,16 +233,3 @@ filename1 = 'rows_'+sys.argv[1]
 outfile1 = open(filename1,'wb')
 pickle.dump(rows_List,outfile1)
 outfile1.close()
-
-
-# Y = {}
-# #Create Y dict
-# for index, row in df_apriori.iterrows():
-#     Y[index] = list(row['itemsets'])
-
-# solution = []
-
-# solve(X,Y,solution)
-# print(solution)
-# print(X)
-# print(Y)
