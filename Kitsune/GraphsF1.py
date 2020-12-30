@@ -48,70 +48,49 @@ class Attack(Enum):
 def generate_graph(graphs_list, device):
     fig = plt.figure()
     ax = plt.gca()
-    colors = ['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan']
-    linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
-    #plt.rc('axes', prop_cycle=(cycler('color', colors)*cycler('linestyle,[-,--,') ))
-    
-    plt.plot([0, 1], [0, 1], 'k--')
-
-
     j = 0
-    for dev in Device:
-        for algorithm in ['Kshape','Kmeans','KernelKmeans']:
-            for i in graphs_list[dev.name][algorithm]:
-                tprs = []
-                mean_fpr = np.linspace(0,1,100)
-                for fold in range(10):
-                    dataset = pd.read_csv('./SKF/'+dev.name+'/'+algorithm+str(i)+'/SKF'+str(fold)+'.csv')
-                    dataset = dataset.to_numpy()
-                    fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-                    indices = np.where(fpr>=0.001)
-                    index = np.min(indices)
-                    Soglia = thresholds[index]
-                    labels = np.zeros(dataset.shape[0])
-                    for i in range(dataset.shape[0]):
-                        if dataset[i,4] <= Soglia:
-                            labels[i] = 0
-                        else:
-                            labels[i] = 1
-                    f1_score[Fold] = metrics.f1_score(dataset[:,1], labels[:], average = 'macro')
-                    f1_score_mean = f1_score.mean()
-                    f1_score_std = f1_score.std()
+    f1_score_mean=np.zeros(len(graphs_list[device]['Kshape'])+len(graphs_list[device]['KernelKmeans'])+len(graphs_list[device]['Kmeans'])+1)
+    f1_score_std=np.zeros(len(graphs_list[device]['Kshape'])+len(graphs_list[device]['KernelKmeans'])+len(graphs_list[device]['Kmeans'])+1)
+    for algorithm in ['Kshape','Kmeans','KernelKmeans']:
+        for i in graphs_list[dev.name][algorithm]:
+            f1_score = np.zeros(10)
+            mean_fpr = np.linspace(0,1,100)
+            for fold in range(10):
+                dataset = pd.read_csv('./SKF/'+dev.name+'/'+algorithm+str(i)+'/SKF'+str(fold)+'.csv')
+                dataset = dataset.to_numpy()
+                fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
+                indices = np.where(fpr>=0.001)
+                index = np.min(indices)
+                Soglia = thresholds[index]
+                labels = np.zeros(dataset.shape[0])
+                for i in range(dataset.shape[0]):
+                    if dataset[i,4] <= Soglia:
+                        labels[i] = 0
+                    else:
+                        labels[i] = 1
+                f1_score[Fold] = metrics.f1_score(dataset[:,1], labels[:], average = 'macro')
+            f1_score_mean = f1_score.mean()
+            f1_score_std = f1_score.std()
+            f1_mean_score = plt.bar(index, f1_score_mean,.3)
+            f1_upper = np.minimum(f1_score_mean + f1_score_std, 1)
+            f1_lower = np.maximum(f1_score_mean - f1_score_std, 0)
 
 
-                
-                alg_str_fix = ""
-                if algorithm == 'Kshape': alg_str_fix = "K-Shape"
-                elif algorithm == 'Kmeans': alg_str_fix = "K-Means"
-                elif algorithm == 'KernelKmeans': alg_str_fix = "Kernel K-Means"
-                line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label=''+alg_str_fix+' '+str(i),linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
-                j = j+1
-
-    tprs = []
-    mean_fpr = np.linspace(0,1,100)
-    for fold in range(10):
-        dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
-        dataset = dataset.to_numpy()
-        fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
-        #plt.plot(fpr,tpr)
-        interp_tpr = np.interp(mean_fpr, fpr, tpr)
-        interp_tpr[0] = 0.0
-        tprs.append(interp_tpr)
-    mean_tpr = np.mean(tprs, axis=0)
-    mean_tpr[-1] = 1.0
-    std_tpr = np.std(tprs, axis=0)
-    tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-    tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-    plt.plot(mean_fpr, mean_tpr,"k-", label='No Clusters',linewidth = 1)
+            
+            alg_str_fix = ""
+            if algorithm == 'Kshape': alg_str_fix = "K-Shape"
+            elif algorithm == 'Kmeans': alg_str_fix = "K-Means"
+            elif algorithm == 'KernelKmeans': alg_str_fix = "Kernel K-Means"
+            line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label=''+alg_str_fix+' '+str(i),linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+            j = j+1
 
 
     plt.xlim([0, 1.05])
     plt.ylim([0, 1.05])
     plt.yticks(np.arange(0, 1.05, .1))
     plt.xticks(np.arange(0, 1.1, .1))
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Mean receiver operating characteristic (ROC) curve')
+    plt.ylabel('F1 Score Mean (Standard Deviation)')
+    plt.title('F1 Score Comparison - '+device)
     lgd = plt.figlegend(bbox_to_anchor = (0.50,-.4),ncol= 3, loc = 'lower center', fontsize = 'medium', fancybox = True, frameon = True)
     lgd.get_frame().set_edgecolor('k')
 

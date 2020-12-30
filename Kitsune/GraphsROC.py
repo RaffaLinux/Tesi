@@ -52,7 +52,10 @@ def generate_graph(graphs_list, device):
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
     #plt.rc('axes', prop_cycle=(cycler('color', colors)*cycler('linestyle,[-,--,') ))
     
-    plt.plot([0, 1], [0, 1], 'k--')
+    ax.set_xscale("symlog",linthreshx=0.001)
+    x_coinflip = np.linspace(1e-3,1,1000)
+    y_coinflip = np.linspace(1e-3,1,1000)
+    plt.plot(x_coinflip,y_coinflip, 'k--', label= "Chance")
 
 
     j = 0
@@ -80,7 +83,6 @@ def generate_graph(graphs_list, device):
                 elif algorithm == 'KernelKmeans': alg_str_fix = "Kernel K-Means"
                 line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label=''+alg_str_fix+' '+str(i),linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
                 j = j+1
-
     tprs = []
     mean_fpr = np.linspace(0,1,100)
     for fold in range(10):
@@ -106,59 +108,59 @@ def generate_graph(graphs_list, device):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Mean receiver operating characteristic (ROC) curve')
-    lgd = plt.figlegend(bbox_to_anchor = (0.50,-.4),ncol= 3, loc = 'lower center', fontsize = 'medium', fancybox = True, frameon = True)
+    lgd = plt.figlegend(bbox_to_anchor = (0.50,-.2),ncol= 5, loc = 'lower center', fontsize = 'x-small', fancybox = True, frameon = True)
     lgd.get_frame().set_edgecolor('k')
 
-    axins = zoomed_inset_axes(ax,6, loc = 7,bbox_to_anchor = (400,135))
-    plt.plot([0, 1], [0, 1], 'k--')
+    # axins = zoomed_inset_axes(ax,6, loc = 7,bbox_to_anchor = (400,135))
+    # plt.plot([0, 1], [0, 1], 'k--')
 
 
-    j = 0
-    for dev in Device:
-        for algorithm in ['Kshape','Kmeans','KernelKmeans']:
-            for i in graphs_list[dev.name][algorithm]:
-                tprs = []
-                mean_fpr = np.linspace(0,1,100)
-                for fold in range(10):
-                    dataset = pd.read_csv('./SKF/'+dev.name+'/'+algorithm+str(i)+'/SKF'+str(fold)+'.csv')
-                    dataset = dataset.to_numpy()
-                    fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
-                    #plt.plot(fpr,tpr)
-                    interp_tpr = np.interp(mean_fpr, fpr, tpr)
-                    interp_tpr[0] = 0.0
-                    tprs.append(interp_tpr)
-                mean_tpr = np.mean(tprs, axis=0)
-                mean_tpr[-1] = 1.0
-                std_tpr = np.std(tprs, axis=0)
-                tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-                tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-                alg_str_fix = ""
-                if algorithm == 'Kshape': alg_str_fix = "K-Shape"
-                elif algorithm == 'Kmeans': alg_str_fix = "K-Means"
-                elif algorithm == 'KernelKmeans': alg_str_fix = "Kernel K-Means"
-                line = axins.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label='_nolegend_',linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
-                j = j+1
+    # j = 0
+    # for dev in Device:
+    #     for algorithm in ['Kshape','Kmeans','KernelKmeans']:
+    #         for i in graphs_list[dev.name][algorithm]:
+    #             tprs = []
+    #             mean_fpr = np.linspace(0,1,100)
+    #             for fold in range(10):
+    #                 dataset = pd.read_csv('./SKF/'+dev.name+'/'+algorithm+str(i)+'/SKF'+str(fold)+'.csv')
+    #                 dataset = dataset.to_numpy()
+    #                 fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
+    #                 #plt.plot(fpr,tpr)
+    #                 interp_tpr = np.interp(mean_fpr, fpr, tpr)
+    #                 interp_tpr[0] = 0.0
+    #                 tprs.append(interp_tpr)
+    #             mean_tpr = np.mean(tprs, axis=0)
+    #             mean_tpr[-1] = 1.0
+    #             std_tpr = np.std(tprs, axis=0)
+    #             tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+    #             tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+    #             alg_str_fix = ""
+    #             if algorithm == 'Kshape': alg_str_fix = "K-Shape"
+    #             elif algorithm == 'Kmeans': alg_str_fix = "K-Means"
+    #             elif algorithm == 'KernelKmeans': alg_str_fix = "Kernel K-Means"
+    #             line = axins.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label='_nolegend_',linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+    #             j = j+1
 
-    tprs = []
-    mean_fpr = np.linspace(0,1,100)
-    for fold in range(10):
-        dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
-        dataset = dataset.to_numpy()
-        fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
-        #plt.plot(fpr,tpr)
-        interp_tpr = np.interp(mean_fpr, fpr, tpr)
-        interp_tpr[0] = 0.0
-        tprs.append(interp_tpr)
-    mean_tpr = np.mean(tprs, axis=0)
-    mean_tpr[-1] = 1.0
-    std_tpr = np.std(tprs, axis=0)
-    tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-    tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-    axins.plot(mean_fpr, mean_tpr,"k-", label='_nolegend_',linewidth = 1)
+    # tprs = []
+    # mean_fpr = np.linspace(0,1,100)
+    # for fold in range(10):
+    #     dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
+    #     dataset = dataset.to_numpy()
+    #     fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
+    #     #plt.plot(fpr,tpr)
+    #     interp_tpr = np.interp(mean_fpr, fpr, tpr)
+    #     interp_tpr[0] = 0.0
+    #     tprs.append(interp_tpr)
+    # mean_tpr = np.mean(tprs, axis=0)
+    # mean_tpr[-1] = 1.0
+    # std_tpr = np.std(tprs, axis=0)
+    # tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+    # tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+    # axins.plot(mean_fpr, mean_tpr,"k-", label='_nolegend_',linewidth = 1)
 
-    axins.set_xlim(0, 0.1)
-    axins.set_ylim(0.9, 1.005)
-    mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.1", linewidth = .25)
+    # axins.set_xlim(0, 0.1)
+    # axins.set_ylim(0.9, 1.005)
+    # mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.1", linewidth = .25)
 
 
     #plt.tight_layout()
@@ -177,5 +179,8 @@ for dev in Device:
 
 device = Device(int(sys.argv[1])).name
 
-graphs_list[device]['Kmeans'] = range(2,18)
+graphs_list[device]['Kmeans'] = [11]
+graphs_list[device]['KernelKmeans'] = [7]
+graphs_list[device]['Kshape'] = [9]
+
 generate_graph(graphs_list,device)
