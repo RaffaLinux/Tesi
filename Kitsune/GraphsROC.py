@@ -179,8 +179,8 @@ for dev in Device:
 
 device = Device(int(sys.argv[1])).name
 
-graphs_list[device]['Kmeans'] = [11]
-graphs_list[device]['KernelKmeans'] = [7]
-graphs_list[device]['Kshape'] = [9]
+#graphs_list[device]['Kmeans'] = [13]
+#graphs_list[device]['KernelKmeans'] = [20]
+graphs_list[device]['Kshape'] = range(2,16)
 
 generate_graph(graphs_list,device)

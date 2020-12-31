@@ -114,5 +114,5 @@ for dev in Device:
 
 device = Device(int(sys.argv[1])).name
 
-graphs_list[device]['Kmeans'] = range(2,18)
+graphs_list[device]['KernelKmeans'] = range(2,19)
 generate_graph(graphs_list,device)

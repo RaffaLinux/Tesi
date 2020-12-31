@@ -65,7 +65,7 @@ def Clustering(dataset, algorithm = 'Kmeans', device = "Ennio_Doorbell"):
    benchmark.close()
 
 
-   for i in [19]:
+   for i in [16]:
       wall_time = time.time()
       process_time = time.process_time()
 
@@ -188,7 +188,7 @@ bar.finish()
 
 
 
-#Conversione dataset Ennio da Dataframe a numpy, creazione dataset benigno, maligno e misto
+#Conversione dataset  da Dataframe a numpy, creazione dataset benigno, maligno e misto
 
 device = Device(int(sys.argv[1])).name
 device_dataset = dataset[device]
@@ -199,5 +199,5 @@ dataset = pd.concat([dataset], ignore_index=True)
 print(dataset)
 
 
-for algorithm in ['Kmeans']:
+for algorithm in ['KernelKmeans']:
    Clustering(dataset = dataset,algorithm = algorithm, device = device)

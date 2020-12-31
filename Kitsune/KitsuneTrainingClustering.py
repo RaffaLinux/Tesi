@@ -171,94 +171,94 @@ skf = StratifiedKFold(n_splits = 10, shuffle = True, random_state = 0)
 
 device = device.name
 
-for algorithm in ['Kmeans']:
+for algorithm in ['KernelKmeans']:
    for key in clusters[device][algorithm].keys():
+      if(key == 16):
+         if check_cluster_degeneri(clusters[device][algorithm][key]): #Double check per i cluster degeneri
+            print("\nSkipping "+algorithm+" "+str(key)+" because of one feature clusters.")
+         else:
 
-      if check_cluster_degeneri(clusters[device][algorithm][key]): #Double check per i cluster degeneri
-         print("\nSkipping "+algorithm+" "+str(key)+" because of one feature clusters.")
-      else:
+            print("\nTraining "+algorithm+" "+str(key))
+            n_autoencoder = len(clusters[device][algorithm][key]) #NB: key è il numero di clusters su cui è stato impostato l'algoritmo, il numero reale di cluster usati dall'algoritmo spesso è minore
+            tss_iteration = 0
 
-         print("\nTraining "+algorithm+" "+str(key))
-         n_autoencoder = len(clusters[device][algorithm][key]) #NB: key è il numero di clusters su cui è stato impostato l'algoritmo, il numero reale di cluster usati dall'algoritmo spesso è minore
-         tss_iteration = 0
+            for train_index, test_index in skf.split(device_all, device_all[:,116]):
+               with tf.device('/cpu:0'):
+                  print("Train:", train_index, "Test:", test_index)
+                  train_index = train_index.astype('int32')
+                  test_index = test_index.astype('int32')
+                  training = device_all[train_index, :116]
+                  training = training[(training[:,115] == 0)] #Selezione dataset benevolo per il training
+                  training_features = training[:,:115]
+                  training_labels = training[:, 115]
+                  training_labels = training_labels.astype('int')
+                  testing = device_all[test_index, : 118]
+                  test_features = device_all[test_index, : 115]
+                  test_labels = device_all[test_index, 115:118]
+                  test_labels = test_labels.astype('int')
+                        
+                  Ensemble = np.empty(n_autoencoder, dtype = object)
 
-         for train_index, test_index in skf.split(device_all, device_all[:,116]):
-            with tf.device('/cpu:0'):
-               print("Train:", train_index, "Test:", test_index)
-               train_index = train_index.astype('int32')
-               test_index = test_index.astype('int32')
-               training = device_all[train_index, :116]
-               training = training[(training[:,115] == 0)] #Selezione dataset benevolo per il training
-               training_features = training[:,:115]
-               training_labels = training[:, 115]
-               training_labels = training_labels.astype('int')
-               testing = device_all[test_index, : 118]
-               test_features = device_all[test_index, : 115]
-               test_labels = device_all[test_index, 115:118]
-               test_labels = test_labels.astype('int')
-                     
-               Ensemble = np.empty(n_autoencoder, dtype = object)
+                  #Building autoencoders & output
+                  for i, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()): 
+                     #index, (key, value). i = numero ordinato del cluster, cluster_number = numero assegnato dall'algoritmo (inutile), cluster_elements = lista delle features nel cluster
+                     n_cluster_elements = len(cluster_elements)
+                     Ensemble[i]= Sequential()
+                     Ensemble[i].add(Dense(units=n_cluster_elements,activation='relu',input_shape=(n_cluster_elements,)))
+                     Ensemble[i].add(Dense(units=math.floor(0.75*n_cluster_elements),activation='relu'))
+                     Ensemble[i].add(Dense(units=n_cluster_elements,activation='sigmoid'))
+                     Ensemble[i].compile(optimizer='adam',loss='mean_squared_error',metrics=['accuracy'])
 
-               #Building autoencoders & output
-               for i, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()): 
-                  #index, (key, value). i = numero ordinato del cluster, cluster_number = numero assegnato dall'algoritmo (inutile), cluster_elements = lista delle features nel cluster
-                  n_cluster_elements = len(cluster_elements)
-                  Ensemble[i]= Sequential()
-                  Ensemble[i].add(Dense(units=n_cluster_elements,activation='relu',input_shape=(n_cluster_elements,)))
-                  Ensemble[i].add(Dense(units=math.floor(0.75*n_cluster_elements),activation='relu'))
-                  Ensemble[i].add(Dense(units=n_cluster_elements,activation='sigmoid'))
-                  Ensemble[i].compile(optimizer='adam',loss='mean_squared_error',metrics=['accuracy'])
+                  Output= Sequential()
+                  Output.add(Dense(units=n_autoencoder,activation='relu',input_shape=(n_autoencoder,)))
+                  Output.add(Dense(units=math.floor(0.75*n_autoencoder),activation='relu'))
+                  Output.add(Dense(units=n_autoencoder,activation='sigmoid'))
+                  Output.compile(optimizer='adam',loss='mean_squared_error',metrics=['accuracy'])
+                  scaler1=MinMaxScaler(feature_range=(0,1))
+                  training_features=scaler1.fit_transform(training_features)
+                  
+                  #Training. [:,cluster_elements] seleziona le colonne nella lista cluster_elements
+                  for i, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()):
+                     Ensemble[i].fit(training_features[:,cluster_elements],training_features[:,cluster_elements], epochs=1, batch_size=32)
+                  score=np.zeros((training_features.shape[0],n_autoencoder))
+                  
+                  #Generazione score Ensemble layer. i itera sulle entries del dataset, j sugli autoencoder/cluster
+                  for j, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()):
+                     pred=Ensemble[j].predict(training_features[:,cluster_elements])
+                     for i in range(training_features.shape[0]):
+                        score[i,j]= np.sqrt(metrics.mean_squared_error(pred[i],training_features[i,cluster_elements]))
+                  
+                  
+                  scaler2=MinMaxScaler(feature_range=(0,1))
+                  score=scaler2.fit_transform(score)
 
-               Output= Sequential()
-               Output.add(Dense(units=n_autoencoder,activation='relu',input_shape=(n_autoencoder,)))
-               Output.add(Dense(units=math.floor(0.75*n_autoencoder),activation='relu'))
-               Output.add(Dense(units=n_autoencoder,activation='sigmoid'))
-               Output.compile(optimizer='adam',loss='mean_squared_error',metrics=['accuracy'])
-               scaler1=MinMaxScaler(feature_range=(0,1))
-               training_features=scaler1.fit_transform(training_features)
-               
-               #Training. [:,cluster_elements] seleziona le colonne nella lista cluster_elements
-               for i, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()):
-                  Ensemble[i].fit(training_features[:,cluster_elements],training_features[:,cluster_elements], epochs=1, batch_size=32)
-               score=np.zeros((training_features.shape[0],n_autoencoder))
-               
-               #Generazione score Ensemble layer. i itera sulle entries del dataset, j sugli autoencoder/cluster
-               for j, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()):
-                  pred=Ensemble[j].predict(training_features[:,cluster_elements])
-                  for i in range(training_features.shape[0]):
-                     score[i,j]= np.sqrt(metrics.mean_squared_error(pred[i],training_features[i,cluster_elements]))
-               
-               
-               scaler2=MinMaxScaler(feature_range=(0,1))
-               score=scaler2.fit_transform(score)
+                  #Training e generazione score Output layer
+                  Output.fit(score,score,epochs=1,batch_size=32)
+                  RMSE=np.zeros(score.shape[0])
+                  pred=Output.predict(score)
 
-               #Training e generazione score Output layer
-               Output.fit(score,score,epochs=1,batch_size=32)
-               RMSE=np.zeros(score.shape[0])
-               pred=Output.predict(score)
-
-               for i in range(score.shape[0]):
-                  RMSE[i]= np.sqrt(metrics.mean_squared_error(pred[i],score[i]))
+                  for i in range(score.shape[0]):
+                     RMSE[i]= np.sqrt(metrics.mean_squared_error(pred[i],score[i]))
 
 
-               # FASE DI TESTING TSS
+                  # FASE DI TESTING TSS
 
-               test_features=scaler1.transform(test_features)
-               test_score=np.zeros((test_features.shape[0],n_autoencoder))
+                  test_features=scaler1.transform(test_features)
+                  test_score=np.zeros((test_features.shape[0],n_autoencoder))
 
-               for j, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()):
-                  pred=Ensemble[j].predict(test_features[:,cluster_elements])
-                  for i in range(test_features.shape[0]):
-                     test_score[i,j]= np.sqrt(metrics.mean_squared_error(pred[i],test_features[i,cluster_elements]))
-               
-               test_score=scaler2.transform(test_score)
-               RMSE=np.zeros(test_score.shape[0])
-               pred=Output.predict(test_score)
+                  for j, (cluster_number, cluster_elements) in enumerate(clusters[device][algorithm][key].items()):
+                     pred=Ensemble[j].predict(test_features[:,cluster_elements])
+                     for i in range(test_features.shape[0]):
+                        test_score[i,j]= np.sqrt(metrics.mean_squared_error(pred[i],test_features[i,cluster_elements]))
+                  
+                  test_score=scaler2.transform(test_score)
+                  RMSE=np.zeros(test_score.shape[0])
+                  pred=Output.predict(test_score)
 
-               for i in range(test_score.shape[0]):
-                  RMSE[i]= np.sqrt(metrics.mean_squared_error(pred[i],test_score[i]))
-               
-               
-               StampaValori(device,algorithm,key, tss_iteration, test_index, test_labels, RMSE)
-               
-               tss_iteration = tss_iteration+1
+                  for i in range(test_score.shape[0]):
+                     RMSE[i]= np.sqrt(metrics.mean_squared_error(pred[i],test_score[i]))
+                  
+                  
+                  StampaValori(device,algorithm,key, tss_iteration, test_index, test_labels, RMSE)
+                  
+                  tss_iteration = tss_iteration+1
