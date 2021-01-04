@@ -15,6 +15,7 @@ from matplotlib.pyplot import legend
 from enum import Enum
 from pyts.multivariate.image import JointRecurrencePlot
 from pyts.image import RecurrencePlot
+from matplotlib.colors import SymLogNorm
 
 
 class Device(Enum):
@@ -75,38 +76,39 @@ def load_dataset(dev: Device = None):
    bar.finish()
    return dataset
 
-def generate_joint_recurrence_plot(dataset):
-   stacked_datasets = np.stack(dataset.values(), axis=0)
-   ftrs = stacked_datasets[:,:, :116]
-   features = ftrs[:,:,:115]
+def generate_joint_recurrence_plot(dataset,device):
+   dataset = pd.concat([dataset], ignore_index=True)
+   subset = dataset.head(n= 2048)
+   subset = subset.to_numpy().astype('float32')
+   ftrs = subset[:, :116]
+   features = ftrs[:,:115]
+   scaler = MinMaxScaler(feature_range = (0,1))
+   features = scaler.fit_transform(features)
+   features = np.transpose(features)
    print(features.shape)
-   jrp = JointRecurrencePlot()
+   features = features.reshape((1,115,2048))
+   print(features.shape)
+   jrp = JointRecurrencePlot(threshold='distance')
    features_jrp = jrp.fit_transform(features)
    plt.figure(figsize=(5, 5))
-   plt.imshow(features_jrp[0], cmap='binary', origin='lower')
+   plt.imshow(features_jrp[0],norm=SymLogNorm(linthresh=1e-3,vmin=0,vmax=1))
    plt.title('Joint Recurrence Plot', fontsize=18)
+   plt.colorbar()
    plt.tight_layout()
-   plt.savefig('./Graphs/Joint Recurrence Plot/JointRecurrencePlot.pdf')
+   plt.savefig('./Graphs/Joint Recurrence Plot/'+device+'.pdf')
 
    return
 
 
 os.chdir('./Kitsune')
+device = Device(0)
 device_dataset = dict()
 
+if len(sys.argv) > 1:
+   device = Device(int(sys.argv[1]))
 
-dataset = load_dataset()
-benign_datasets = dict()
-scaler = MinMaxScaler(feature_range = (0,1))
-
-for dev in Device:
-   subset = dataset[dev.name]['benign_traffic']
-   subset = pd.concat([subset], ignore_index=True)
-   subset = subset.head(n = 2048)
-   subset = subset.to_numpy().astype('float32')
-   subset = scaler.fit_transform(subset)
-   benign_datasets[dev.name] = subset
-
-
-
-generate_joint_recurrence_plot(benign_datasets)
+device_dataset = load_dataset(device)[device.name]
+device_benign = device_dataset['benign_traffic']
+device_benign = pd.concat([device_benign], ignore_index=True)
+print(device_benign)
+generate_joint_recurrence_plot(device_benign, device.name)

@@ -77,13 +77,13 @@ def load_dataset(dev: Device = None):
 
 def generate_joint_recurrence_plot(dataset,  device = "Ennio_Doorbell"):
    dataset = pd.concat([dataset], ignore_index=True)
-   subset = dataset.head(n = 2048)
+   subset = dataset.head(n = 400)
    subset = subset.to_numpy().astype('float32')
    ftrs = subset[:, :116]
    features = ftrs[:,:115]
    scaler = MinMaxScaler(feature_range = (0,1))
    features = scaler.fit_transform(features)
-   #features = np.transpose(features)
+   features = np.transpose(features)
    print(features.shape)
    rp = RecurrencePlot()
    features_rp = rp.fit_transform(features)

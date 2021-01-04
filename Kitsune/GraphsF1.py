@@ -5,6 +5,7 @@ import math
 import datetime
 import os
 import progressbar
+import seaborn as sns
 import numpy as np
 import tensorflow as tf
 import time
@@ -45,61 +46,82 @@ class Attack(Enum):
    mirai_udp = 9
    mirai_udpplain = 10
 
-def generate_graph(graphs_list, device):
-    fig = plt.figure()
-    ax = plt.gca()
-    j = 0
-    f1_score_mean=np.zeros(len(graphs_list[device]['Kshape'])+len(graphs_list[device]['KernelKmeans'])+len(graphs_list[device]['Kmeans'])+1)
-    f1_score_std=np.zeros(len(graphs_list[device]['Kshape'])+len(graphs_list[device]['KernelKmeans'])+len(graphs_list[device]['Kmeans'])+1)
+def compute_F1s(graphs_list, device):
+
+    df = pd.DataFrame(columns= ['Algorithm','Attack','F1 Score Mean', 'F1 Score Std. Dev.'])
+
     for algorithm in ['Kshape','Kmeans','KernelKmeans']:
-        for i in graphs_list[dev.name][algorithm]:
-            f1_score = np.zeros(10)
-            mean_fpr = np.linspace(0,1,100)
-            for fold in range(10):
-                dataset = pd.read_csv('./SKF/'+dev.name+'/'+algorithm+str(i)+'/SKF'+str(fold)+'.csv')
-                dataset = dataset.to_numpy()
-                fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-                indices = np.where(fpr>=0.001)
-                index = np.min(indices)
-                Soglia = thresholds[index]
-                labels = np.zeros(dataset.shape[0])
-                for i in range(dataset.shape[0]):
-                    if dataset[i,4] <= Soglia:
-                        labels[i] = 0
+
+        score_means = []
+        score_devs = []
+
+        for i in graphs_list[device][algorithm]:
+            for atk in Attack:
+                if (device == Device(2).name or device == Device(6).name) and atk.value >= 6: continue
+                f1_score = np.zeros(10)
+                for fold in range(10):
+                    dataset = pd.read_csv('./SKF/'+device+'/'+algorithm+str(i)+'/SKF'+str(fold)+'.csv')
+                    dataset = dataset.to_numpy()
+                    fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
+                    indices = np.where(fpr>=0.0001)
+                    index = np.min(indices)
+                    soglia = thresholds[index]
+                    dataset = dataset[(dataset[:,3] == atk.value)]
+                    labels = np.zeros(dataset.shape[0])
+                    for j in range(dataset.shape[0]):
+                        if dataset[j,4] <= soglia:
+                            labels[j] = 0
+                        else:
+                            labels[j] = 1
+                    if(atk.value == 0):
+                        f1_score[fold] = metrics.f1_score(dataset[:,1], labels[:], average = None)[0]
                     else:
-                        labels[i] = 1
-                f1_score[Fold] = metrics.f1_score(dataset[:,1], labels[:], average = 'macro')
-            f1_score_mean = f1_score.mean()
-            f1_score_std = f1_score.std()
-            f1_mean_score = plt.bar(index, f1_score_mean,.3)
-            f1_upper = np.minimum(f1_score_mean + f1_score_std, 1)
-            f1_lower = np.maximum(f1_score_mean - f1_score_std, 0)
+                        f1_score[fold] = metrics.f1_score(dataset[:,1], labels[:], labels= [0,1], average = None)[1]
+                f1_mean = f1_score.mean()
+                f1_std = f1_score.std()
+                alg_str_fix = ""
+                if algorithm == 'Kshape': alg_str_fix = "K-Shape "
+                elif algorithm == 'Kmeans': alg_str_fix = "K-Means "
+                elif algorithm == 'KernelKmeans': alg_str_fix = "Kernel K-Means "            
+                df.loc[len(df)] = [alg_str_fix+str(i), atk.name.replace('_',' ').capitalize(), f1_mean,f1_std]
 
 
-            
-            alg_str_fix = ""
-            if algorithm == 'Kshape': alg_str_fix = "K-Shape"
-            elif algorithm == 'Kmeans': alg_str_fix = "K-Means"
-            elif algorithm == 'KernelKmeans': alg_str_fix = "Kernel K-Means"
-            line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label=''+alg_str_fix+' '+str(i),linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
-            j = j+1
+    for atk in Attack:
+        if (device == Device(2).name or device == Device(6).name) and atk.value >= 6: continue
+        f1_score = np.zeros(10)
+        for fold in range(10):
+            dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
+            dataset = dataset.to_numpy()
+            fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
+            indices = np.where(fpr>=0.0001)
+            index = np.min(indices)
+            soglia = thresholds[index]
+            dataset=dataset[(dataset[:,3] == atk.value)]
+            labels = np.zeros(dataset.shape[0])
+            for j in range(dataset.shape[0]):
+                if dataset[j,4] <= soglia:
+                    labels[j] = 0
+                else:
+                    labels[j] = 1
+            if(atk.value == 0):
+                f1_score[fold] = metrics.f1_score(dataset[:,1], labels[:], average = None)[0]
+            else:
+                f1_score[fold] = metrics.f1_score(dataset[:,1], labels[:],labels = [0,1], average = None)[1]
+        f1_mean = f1_score.mean()
+        f1_std = f1_score.std()            
+        df.loc[len(df)] = ['No Clusters', atk.name.replace('_',' ').capitalize(), f1_mean,f1_std]
 
+    generate_graph(df, device)
 
-    plt.xlim([0, 1.05])
-    plt.ylim([0, 1.05])
-    plt.yticks(np.arange(0, 1.05, .1))
-    plt.xticks(np.arange(0, 1.1, .1))
-    plt.ylabel('F1 Score Mean (Standard Deviation)')
-    plt.title('F1 Score Comparison - '+device)
-    lgd = plt.figlegend(bbox_to_anchor = (0.50,-.4),ncol= 3, loc = 'lower center', fontsize = 'medium', fancybox = True, frameon = True)
-    lgd.get_frame().set_edgecolor('k')
+def generate_graph(df, device):
+    sns.set_style("ticks")
+    g = sns.catplot(data=df, kind="bar", x="Attack",ci = 'F1 Score Std. Dev.', y="F1 Score Mean", hue="Algorithm",palette="tab10", alpha=1, height=5, aspect = 16/9)
+    #g.despine(left=True)
+    g.set_axis_labels("", "F1 Score")
+    g.legend.set_title("")
+    g.set_xticklabels(rotation=30)
 
-    axins = zoomed_inset_axes(ax,6, loc = 7,bbox_to_anchor = (400,135))
-    plt.plot([0, 1], [0, 1], 'k--')
-
-
-    #plt.tight_layout()
-    plt.savefig('./Graphs/ROC/'+device+'.pdf',bbox_extra_artists = [lgd],bbox_inches='tight')
+    g.savefig('./Graphs/F1Scores/'+device+'.pdf')
 
 
 
@@ -114,5 +136,7 @@ for dev in Device:
 
 device = Device(int(sys.argv[1])).name
 
-graphs_list[device]['KernelKmeans'] = range(2,19)
-generate_graph(graphs_list,device)
+graphs_list[device]['Kshape'] = [11]
+graphs_list[device]['Kmeans'] = [11]
+graphs_list[device]['KernelKmeans'] = [11]
+compute_F1s(graphs_list,device)
