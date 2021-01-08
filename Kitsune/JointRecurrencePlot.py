@@ -17,6 +17,7 @@ from enum import Enum
 from pyts.multivariate.image import JointRecurrencePlot
 from pyts.image import RecurrencePlot
 from matplotlib.colors import SymLogNorm
+import scipy.io
 
 
 class Device(Enum):
@@ -96,6 +97,8 @@ def generate_joint_recurrence_plot(dataset,device):
    outfile = open(filename,'wb')
    pickle.dump(features_jrp[0],outfile)
    outfile.close()
+   scipy.io.savemat('test.mat', {"RP":features_jrp[0]})
+
 
    plt.figure(figsize=(5, 5))
    plt.imshow(features_jrp[0],norm=SymLogNorm(linthresh=1e-3,vmin=0,vmax=1))

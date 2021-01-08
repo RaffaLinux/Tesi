@@ -26,6 +26,10 @@ from pyrqa.analysis_type import Classic
 from pyrqa.neighbourhood import FixedRadius
 from pyrqa.metric import EuclideanMetric
 from pyrqa.computation import RQAComputation
+from pyrqa.analysis_type import Cross
+from pyrqa.neighbourhood import Unthresholded
+from pyrqa.computation import RPComputation
+import scipy.io
 
 class Device(Enum):
    Danmini_Doorbell = 0
@@ -136,21 +140,40 @@ for dev in Device:
    dataset_benign[dev.name] = dataset_benign[dev.name][:,:115]
    scaler = MinMaxScaler(feature_range = (0,1))
    dataset_benign[dev.name] = scaler.fit_transform(dataset_benign[dev.name])
-   print(dataset_benign[dev.name])
 
-for i, dev1 in enumerate(Device):
-   time_serieses_1 = []
-   for k in range(115):
-      time_serieses_1.append(TimeSeries(dataset_benign[dev1.name][:,k]))
-   settings_1 = Settings(time_serieses_1)
+os.chdir('..')
+JCRP = None
+for index_dev1 in range(2,9):
+   dev1 = Device(index_dev1).name
+   for index_dev2 in range(0,9):
+      dev2 = Device(index_dev2).name
+      JCRP = None
+      if index_dev2 < index_dev1:
+         for k in range(115):
+            time_series_x = TimeSeries(dataset_benign[dev1][:,k])
 
-   for j,dev2 in enumerate(Device):
-      if j > i:
-            time_serieses_2 = []
-            for k in range(115):
-               time_serieses_2.append(TimeSeries(dataset_benign[dev2.name][:,k]))
-            settings_2 = Settings(time_serieses_2)
-            joint_settings = JointSettings(settings_1, settings_2)
-            computation = JRQAComputation.create(joint_settings, verbose=True)
-            result = computation.run()
-            print(result)
+            for j in range(115):
+               print((k),(j))
+               time_series_y = TimeSeries(dataset_benign[dev2][:,j])
+               time_series = (time_series_x, time_series_y)
+               settings = Settings(time_series, analysis_type=Cross, neighbourhood=FixedRadius(1), similarity_measure=EuclideanMetric)
+               computation = RPComputation.create(settings, verbose=False)
+               result = computation.run()
+               if JCRP is None:
+                  JCRP = result.recurrence_matrix_reverse_normalized[::-1]
+               else:
+                  JCRP = np.multiply(JCRP, result.recurrence_matrix_reverse_normalized[::-1])
+
+            filename = './Kitsune/JCRP/'+dev1+'____'+dev2+'.np'
+            outfile = open(filename,'wb')
+            pickle.dump(JCRP,outfile)
+            outfile.close()
+            plt.figure(figsize=(5, 5))
+            plt.imshow(JCRP,norm=SymLogNorm(linthresh=1e-3,vmin=0,vmax=1))
+            plt.gca().invert_yaxis()
+            plt.title(dev1.replace("_"," ").title()+" - "+dev2.replace("_"," ").title())
+            plt.colorbar(shrink = .7)
+            plt.tight_layout()
+            plt.savefig('./Kitsune/Graphs/Joint Cross Recurrence Plot/'+dev1+'____'+dev2+'.pdf')
+            scipy.io.savemat('./Kitsune/JCRP/'+dev1+'____'+dev2+'.mat', {"RP":JCRP})
+
