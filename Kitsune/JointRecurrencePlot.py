@@ -7,6 +7,7 @@ import datetime
 import progressbar
 import numpy as np
 import time
+import pickle
 #from tslearn.clustering import TimeSeriesKMeans, KShape, KernelKMeans
 from sklearn.preprocessing import MinMaxScaler
 from tslearn.preprocessing import TimeSeriesScalerMinMax
@@ -90,10 +91,17 @@ def generate_joint_recurrence_plot(dataset,device):
    print(features.shape)
    jrp = JointRecurrencePlot(threshold='distance')
    features_jrp = jrp.fit_transform(features)
+   
+   filename = './JRP/'+device
+   outfile = open(filename,'wb')
+   pickle.dump(features_jrp[0],outfile)
+   outfile.close()
+
    plt.figure(figsize=(5, 5))
    plt.imshow(features_jrp[0],norm=SymLogNorm(linthresh=1e-3,vmin=0,vmax=1))
-   plt.title('Joint Recurrence Plot', fontsize=18)
-   plt.colorbar()
+   plt.gca().invert_yaxis()
+   plt.title(device.replace('_',' '))
+   plt.colorbar(shrink = .7)
    plt.tight_layout()
    plt.savefig('./Graphs/Joint Recurrence Plot/'+device+'.pdf')
 
