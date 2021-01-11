@@ -45,7 +45,37 @@ class Attack(Enum):
    mirai_udp = 9
    mirai_udpplain = 10
 
-def generate_graph(algorithm):
+def load_clusters():
+   clusters = dict()
+   clusters_path = './FPMaXX/'
+
+   for algorithm in ['Kmeans','Kshape','KernelKmeans']:
+      clusters[algorithm] = dict()
+
+      rows_file = open(clusters_path+'rows_'+algorithm, 'rb')
+      rows = pickle.load(rows_file)
+      rows_file.close()
+
+      solutions_file = open(clusters_path+'solutions_'+algorithm,'rb')
+      solutions = pickle.load(solutions_file)
+      solutions_file.close()
+      clusters[algorithm]['biggest_clusters_weighted'] = fpmaxx_to_clusters(rows,solutions[0])
+      clusters[algorithm]['biggest_clusters_mean'] = fpmaxx_to_clusters(rows,solutions[1])
+      clusters[algorithm]['best_support_weighted'] = fpmaxx_to_clusters(rows,solutions[2])
+      clusters[algorithm]['best_support_mean'] = fpmaxx_to_clusters(rows,solutions[3])
+      clusters[algorithm]['best_10_mean'] = fpmaxx_to_clusters(rows,solutions[4])
+      clusters[algorithm]['best_10_weighted'] = fpmaxx_to_clusters(rows,solutions[5])
+
+   return clusters
+
+def fpmaxx_to_clusters(rows, solution):
+   clusters = dict()
+   for i,elem in enumerate(solution[0]):
+      clusters[i] = rows[int(elem)][0]
+
+   return clusters
+
+def generate_graph(algorithm, clusters):
     fig = plt.figure()
     ax = plt.gca()
     colors = ['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan']
@@ -53,15 +83,19 @@ def generate_graph(algorithm):
     #plt.rc('axes', prop_cycle=(cycler('color', colors)*cycler('linestyle,[-,--,') ))
     
     ax.set_xscale("symlog",linthreshx=0.001)
-    x_coinflip = np.linspace(1e-3,1,1000)
-    y_coinflip = np.linspace(1e-3,1,1000)
+    x_coinflip = np.linspace(1e-4,1,1000)
+    y_coinflip = np.linspace(1e-4,1,1000)
+
+    plt.plot([1e-2, 1e-2], [0, 10], 'k:', alpha = .3)
+
     plt.plot(x_coinflip,y_coinflip, 'k--', label= "Chance")
 
 
     j = 0
     for method in ['best_10_mean','best_10_weighted','best_support_mean','best_support_weighted','biggest_clusters_mean','biggest_clusters_weighted']:
+        n_clusters = len(clusters[algorithm][method])
         tprs = []
-        mean_fpr = np.linspace(0,1,100)
+        mean_fpr = np.linspace(1e-4,1,10000)
         for fold in range(10):
             dataset = pd.read_csv('./SKF/Centralized/'+algorithm+'/'+method+'/SKF'+str(fold)+'.csv')
             dataset = dataset.to_numpy()
@@ -76,10 +110,10 @@ def generate_graph(algorithm):
         tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
         tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
         alg_str_fix = method.replace('_',' ').title()
-        line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label=''+alg_str_fix+' ',linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+        line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label=''+alg_str_fix+' ('+str(n_clusters)+')',linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
         j = j+1
     tprs = []
-    mean_fpr = np.linspace(0,1,100)
+    mean_fpr = np.linspace(1e-4,1,10000)
     for fold in range(10):
         dataset = pd.read_csv('./SKF/Centralized/Base/SKF'+str(fold)+'.csv')
         dataset = dataset.to_numpy()
@@ -93,13 +127,12 @@ def generate_graph(algorithm):
     std_tpr = np.std(tprs, axis=0)
     tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
     tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-    plt.plot(mean_fpr, mean_tpr,"k-", label='No Clusters',linewidth = 1)
+    plt.plot(mean_fpr, mean_tpr,"k-", label='Time Clusters',linewidth = 1)
 
 
     plt.xlim([0, 1.05])
     plt.ylim([0, 1.05])
     plt.yticks(np.arange(0, 1.05, .1))
-    plt.xticks(np.arange(0, 1.1, .1))
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Mean receiver operating characteristic (ROC) curve')
@@ -110,17 +143,9 @@ def generate_graph(algorithm):
 
 
 os.chdir('./Kitsune/')
-# graphs_list = dict()
-# for dev in Device:
-#     graphs_list[dev.name] = dict()
-#     graphs_list[dev.name]['Kshape'] = []
-#     graphs_list[dev.name]['Kmeans'] = []
-#     graphs_list[dev.name]['KernelKmeans'] = []
+clusters = load_clusters()
 
-# device = Device(int(sys.argv[1])).name
 
-# #graphs_list[device]['Kmeans'] = [13]
-# #graphs_list[device]['KernelKmeans'] = [20]
-# graphs_list[device]['Kshape'] = range(2,16)
-
-generate_graph('KernelKmeans')
+generate_graph('KernelKmeans',clusters)
+generate_graph('Kshape',clusters)
+generate_graph('Kmeans',clusters)

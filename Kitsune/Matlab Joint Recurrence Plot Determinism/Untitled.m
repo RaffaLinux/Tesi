@@ -1,1 +1,0 @@
-[RR1,DET1,ENTR1,L1] = Recu_RQA(RP,0)
