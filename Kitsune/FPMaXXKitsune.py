@@ -155,7 +155,7 @@ skf = StratifiedKFold(n_splits = 10, shuffle = True, random_state = 0)
 
 device = device.name
 
-for algorithm in ['Kshape','Kmeans', 'KernelKmeans(schifo)']:
+for algorithm in ['Kshape','Kmeans', 'KernelKmeans']:
    for key in clusters[algorithm].keys():
 
       print("\nTraining "+algorithm+" "+str(key))
