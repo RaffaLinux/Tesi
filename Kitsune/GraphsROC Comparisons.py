@@ -56,14 +56,13 @@ def generate_graph(graphs_list, device):
     x_coinflip = np.linspace(1e-4,1,1000)
     y_coinflip = np.linspace(1e-4,1,1000)
 
-    plt.plot([1e-3, 1e-3], [0, 10], 'k:', alpha = .3)
+    plt.plot([1e-2, 1e-2], [0, 10], 'k:', alpha = .3)
 
     plt.plot(x_coinflip,y_coinflip, 'k--', label= "Chance")
 
 
     j = 0
     for algorithm in ['Kshape','Kmeans','KernelKmeans']:
-        graphs_list[device][algorithm] = range(2,len(glob.glob('./SKF/'+device+'/'+algorithm+'**/*.csv'))/10 +2)
         for i in graphs_list[device][algorithm]:
             tprs = []
             mean_fpr = np.linspace(1e-4,1,10000)
@@ -111,12 +110,12 @@ def generate_graph(graphs_list, device):
     #plt.xticks(np.arange(1e-3, 1.1, .1))
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('ROC Curve '+device.replace('_',' ')+' - Kernel K-Means')
-    lgd = plt.figlegend(bbox_to_anchor = (0.50,-.20),ncol= 5, loc = 'lower center', fontsize = 'x-small', fancybox = True, frameon = True)
+    plt.title('ROC Curve '+device.replace('_',' ')+' - Comparison')
+    lgd = plt.figlegend(bbox_to_anchor = (0.50,-.10),ncol= 5, loc = 'lower center', fontsize = 'x-small', fancybox = True, frameon = True)
     lgd.get_frame().set_edgecolor('k')
 
 
-    plt.savefig('./Graphs/ROC/'+device+'.pdf',bbox_extra_artists = [lgd],bbox_inches='tight')
+    plt.savefig('./Graphs/ROC/'+device+'_Comparison.pdf',bbox_extra_artists = [lgd],bbox_inches='tight')
 
 
 
@@ -129,9 +128,10 @@ for dev in Device:
     graphs_list[dev.name]['Kmeans'] = []
     graphs_list[dev.name]['KernelKmeans'] = []
 
-device = Device(int(sys.argv[1])).name
 
-#graphs_list[device]['Kmeans'] = range(2,18)
-#graphs_list[device]['KernelKmeans'] = range(2,21)
-#graphs_list[device]['Kshape'] = range(2,25)
-generate_graph(graphs_list,device)
+for index, best_clusters in enumerate([[12,11,14],[5,17,17], [9,5,11],[10,7,11],[13,7,15],[14,13,6],[16,12,30],[11,8,20],[10,18,14]]):
+    device = Device(index).name
+    graphs_list[device]['Kmeans'] = [best_clusters[0]]
+    graphs_list[device]['Kshape'] = [best_clusters[1]]
+    graphs_list[device]['KernelKmeans'] = [best_clusters[2]]
+    generate_graph(graphs_list,device)

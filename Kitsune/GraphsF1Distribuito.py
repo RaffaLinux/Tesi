@@ -117,7 +117,7 @@ def generate_graph(df,device):
                 p.get_height() * 1.02, 
                 '{0:.2f}'.format(p.get_height()), 
                 color='black', rotation='horizontal', size= "medium")
-    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.3), fancybox = True,edgecolor = "k")
+    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.2), fancybox = True,edgecolor = "k")
     #plt.legend(bbox_to_anchor=(1.01, 1),borderaxespad=0)
     g.savefig('./Graphs/F1Scores/'+device+'.pdf')
 

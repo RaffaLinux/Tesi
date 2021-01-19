@@ -111,7 +111,7 @@ dataset = dict()
 device_dataset = dict()
 clusters = load_clusters()
 dataset = load_dataset()
-for devices_list in [[1,8], [2,4,5,7]]: #cluster usciti fuori dal clustering gerarchico delle distanze dei JCRP
+for devices_list in [[0,1,3,6], [4,8]]: #cluster usciti fuori dal clustering gerarchico delle distanze dei JCRP
    all_devices_mix = DataFrame()
    all_devices_benign = DataFrame()
    all_devices_malign = DataFrame()

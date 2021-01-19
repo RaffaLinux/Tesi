@@ -56,7 +56,7 @@ def generate_graph(graphs_list, graph_name):
     x_coinflip = np.linspace(1e-4,1,1000)
     y_coinflip = np.linspace(1e-4,1,1000)
 
-    plt.plot([1e-3, 1e-3], [0, 10], 'k:', alpha = .3)
+    plt.plot([1e-2, 1e-2], [0, 10], 'k:', alpha = .3)
 
     plt.plot(x_coinflip,y_coinflip, 'k--', label= "Chance")
 
@@ -83,9 +83,7 @@ def generate_graph(graphs_list, graph_name):
         line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= approach,linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
         j = j+1
 
-    mean_tpr = np.mean(tprs, axis=0)
-    mean_tpr[-1] = 1.0
-    std_tpr = np.std(tprs, axis=0)
+
 
     plt.xlim([1e-4, 1.05])
     plt.ylim([0, 1.05])
@@ -104,14 +102,27 @@ def generate_graph(graphs_list, graph_name):
 
 os.chdir('./Kitsune/')
 graphs_list = dict()
+
 # graphs_list["Hybrid - Cluster 0"] = "Hybrid/Ecobee_ThermostatSimpleHome_XCS7_1003_WHT_Security_Camera"
 # graphs_list["Centralized - K-Means - Best 10 mean "] = "Centralized/Kmeans/best_10_mean"
 # graphs_list["Distributed - SimpleHome 1003 - K-Shape 18"] = "SimpleHome_XCS7_1003_WHT_Security_Camera/Kshape18"
 # graphs_list["Distributed - Ecobee Thermostat - K-Means 5"] = "Ecobee_Thermostat/Kmeans5"
-graphs_list["Hybrid - Cluster 1"] = "Hybrid/Ennio_DoorbellProvision_PT_737E_Security_CameraProvision_PT_838_Security_CameraSimpleHome_XCS7_1002_WHT_Security_Camera"
-graphs_list["Centralized - K-Means - Best 10 mean "] = "Centralized/Kmeans/best_10_mean"
-graphs_list["Distributed - Provision 737E - Kernel K-Means 15"] = "Provision_PT_737E_Security_Camera/KernelKmeans15"
-graphs_list["Distributed - Provision 838 - K-Shape 13"] = "Provision_PT_838_Security_Camera/Kshape13"
-graphs_list["Distributed - SimpleHome - K-Means 11"] = "SimpleHome_XCS7_1002_WHT_Security_Camera/Kmeans11"
+# generate_graph(graphs_list,"Hybrid Clustering - Cluster 0")
 
-generate_graph(graphs_list,"Hybrid Clustering - Cluster 1")
+# graphs_list = dict()
+
+# graphs_list["Hybrid - Cluster 1"] = "Hybrid/Ennio_DoorbellProvision_PT_737E_Security_CameraProvision_PT_838_Security_CameraSimpleHome_XCS7_1002_WHT_Security_Camera"
+# graphs_list["Centralized - K-Means - Best 10 mean "] = "Centralized/Kmeans/best_10_mean"
+# graphs_list["Distributed - Provision 737E - Kernel K-Means 15"] = "Provision_PT_737E_Security_Camera/KernelKmeans15"
+# graphs_list["Distributed - Provision 838 - K-Shape 13"] = "Provision_PT_838_Security_Camera/Kshape13"
+# graphs_list["Distributed - SimpleHome 1002 - K-Means 11"] = "SimpleHome_XCS7_1002_WHT_Security_Camera/Kmeans11"
+# generate_graph(graphs_list,"Hybrid Clustering - Cluster 1")
+
+graphs_list = dict()
+
+graphs_list["Hybrid - Cluster 0"] = "Hybrid/Ecobee_ThermostatSimpleHome_XCS7_1003_WHT_Security_Camera"
+graphs_list["Hybrid - Cluster 1"] = "Hybrid/Ennio_DoorbellProvision_PT_737E_Security_CameraProvision_PT_838_Security_CameraSimpleHome_XCS7_1002_WHT_Security_Camera"
+graphs_list["Hybrid - Cluster 0 (BAD)"] = "Hybrid/Provision_PT_737E_Security_CameraSimpleHome_XCS7_1003_WHT_Security_Camera"
+graphs_list["Hybrid - Cluster 1 (BAD)"] = "Hybrid/Danmini_DoorbellEcobee_ThermostatPhilips_B120N10_Baby_MonitorSamsung_SNH_1011_N_Webcam"
+graphs_list["Centralized - K-Means - Best 10 mean "] = "Centralized/Kmeans/best_10_mean"
+generate_graph(graphs_list,"Hybrid Clustering - Bad vs Good")

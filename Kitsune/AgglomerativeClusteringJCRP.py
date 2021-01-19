@@ -1,4 +1,5 @@
 from sklearn.cluster import AgglomerativeClustering
+import numpy as np
 
 distances = [
 [0,	0.4598,	0.4124,	1,	0.3292,	0.3309,	0.9978,	0.3886,	0.2174],
@@ -12,5 +13,7 @@ distances = [
 [0.2174,	0.1535,	0.1527,	1,	0.3293,	0.1856,	0.4821,	0.2566,	0],
 ]
 
+#distances = np.ones(shape = (9,9)) - np.eye(9) - distances
+#print(distances)
 model = AgglomerativeClustering(affinity='precomputed', n_clusters = 5, linkage = 'complete').fit(distances)
 print(model.labels_)

@@ -117,7 +117,7 @@ def compute_accuracy(graphs_list, device):
 
 def generate_graph(df, device):
     sns.set_style("ticks")
-    g = sns.catplot(data=df, kind="bar", x="Attack",ci = 'Accuracy Std. Dev.', y="Accuracy Mean", hue="Algorithm",palette="tab10", alpha=1, height=5, aspect = 19/9)
+    g = sns.catplot(data=df, kind="bar", x="Attack",ci = 'Accuracy Std. Dev.', y="Accuracy Mean", hue="Algorithm",palette="tab10", alpha=1, height=4.5, aspect = 16/9)
     #g.despine(left=True)
     g.set_axis_labels("", "Accuracy")
     g.legend.set_title("")
@@ -134,14 +134,19 @@ def generate_graph(df, device):
             df_temp = df_temp.loc[df["Attack"].str.contains(Attack(index % 9).name.replace('_',' ').capitalize())]
         yerr = df_temp.iloc[0]["Accuracy Std. Dev."]
         #ax.errorbar(p.get_x() +0.1, p.get_height(), yerr, ecolor = 'k', linewidth = .5)
-
-        ax.text(p.get_x() + 0.015, 
-                p.get_height() * 1.02, 
-                '{0:.2f}'.format(p.get_height()), 
-                color='black', rotation='horizontal', size= "xx-small")
-    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.3), fancybox = True,edgecolor = "k")
+        if device == "Ennio_Doorbell" or device == "Samsung_SNH_1011_N_Webcam":
+            ax.text(p.get_x(), 
+                    p.get_height() * 1.02, 
+                    '{0:.2f}'.format(p.get_height()), 
+                    color='black',rotation = 45, size= "x-small")
+        else:
+            ax.text(p.get_x()-0.03, 
+                    p.get_height() * 1.02, 
+                    '{0:.2f}'.format(p.get_height()), 
+                    color='black',rotation = 45, size= "x-small")
+    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.3), fancybox = True,edgecolor = "k", fontsize = 'large')
     #plt.legend(bbox_to_anchor=(1.01, 1),borderaxespad=0)
-    g.savefig('./Graphs/Accuracy/'+device+'.pdf')
+    g.savefig('./Graphs/Accuracy/Distribuito/'+device+'.pdf')
 
 
 
