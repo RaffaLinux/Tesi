@@ -102,40 +102,43 @@ def load_clusters():
 
    return clusters
 
-def get_random_clusters(n_elem, n_clusters, random_state=0):
- k = int(np.floor(n_elem/n_clusters))
- np.random.seed(random_state)
- a=list(range(n_elem))
- c=[]
- for _ in range(n_clusters):
-  c.append([])
-  for _ in range(k):
-   c[-1].append(a.pop(np.random.choice(list(range(len(a))))))
- i=-1
- for e in a:
-  c[i].append(e)
-  i-=1
- return c
+def get_random_clusters(n_device, n_elem, random_state=0):
+   np.random.seed(random_state)
+   a=list(range(n_device))
+   c=[]
+
+   n_clusters_ =  n_device//n_elem
+   rest = n_device%n_elem
+
+   for _ in range(n_clusters_):
+      c.append([])
+      for _ in range(n_elem):
+         c[-1].append(a.pop(np.random.choice(list(range(len(a))))))
+
+   c.append([])
+   for e in a:
+      c[-1].append(e)
+
+   return c
 
 
 
 #Load del dataset,conversione dataset da Dataframe a numpy, creazione dataset benigno, maligno e all
 os.chdir('./Kitsune')
-dataset = dict()
-device_dataset = dict()
 clusters = load_clusters()
-dataset = load_dataset()
 
-for n_clusters in range(2,5):
+for n_clusters in range(6,7,8):
    for n_restart in range(10):
-      for devices_list in get_random_clusters(9,n_clusters,n_restart): #cluster usciti fuori dal clustering gerarchico delle distanze dei JCRP
+      print(get_random_clusters(9,n_clusters,n_restart))
+      for devices_list in get_random_clusters(9,n_clusters,n_restart):
          all_devices_mix = DataFrame()
          all_devices_benign = DataFrame()
          all_devices_malign = DataFrame()
 
          devices_list_str = ""
          for device in devices_list:
-            devices_list_str = devices_list_str + Device(device).name+" + "
+            dataset = load_dataset(Device(device))
+            devices_list_str = devices_list_str + str(Device(device).value)+" + "
             device_dataset = dataset[Device(device).name]
 
             device_benign = device_dataset['benign_traffic']
