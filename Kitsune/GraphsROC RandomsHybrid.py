@@ -63,15 +63,15 @@ def generate_graph(graph_name):
 
     j = 0
 
-    for n_cluster in [2,3,4]:
+    for n_cluster in [2,3,4,6,7]:
         tprs = []
         mean_fpr = np.linspace(1e-4,1,10000)
         for n_restart in range(10):
             paths = glob.glob('./SKF/Hybrid/Randoms/'+str(n_cluster)+'/Restart'+str(n_restart)+'/*')
-            #print(paths)
+            print(paths)
             for path in paths:
                 for dev in Device:
-                    if dev.name in path:
+                    if str(dev.value) in path.split('\\')[-1]:
                         for fold in range(10):
                             dataset = pd.read_csv(path+'/SKF'+str(fold)+'.csv')
                             dataset = dataset.to_numpy()
