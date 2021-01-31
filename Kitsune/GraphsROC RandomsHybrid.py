@@ -86,7 +86,7 @@ def generate_graph(graph_name):
         mean_tpr[-1] = 1.0
         std_tpr = np.std(tprs, axis=0)
         print(mean_tpr[mean_fpr[:] == 0.01])
-        line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= str(n_cluster)+" clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+        line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= str(n_cluster)+" devices",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
         j = j+1
 
 

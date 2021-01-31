@@ -103,17 +103,24 @@ def load_clusters():
    return clusters
 
 def get_random_clusters(n_device, n_elem, random_state=0):
-   np.random.seed(random_state)
-   a=list(range(n_device))
-   c=[]
+   if n_elem < 8:
+      np.random.seed(random_state)
+      a=list(range(n_device))
+      c=[]
 
-   n_clusters_ =  n_device//n_elem
-   rest = n_device%n_elem
+      n_clusters_ =  n_device//n_elem
+      rest = n_device%n_elem
 
-   for _ in range(n_clusters_):
+      for _ in range(n_clusters_):
+         c.append([])
+         for _ in range(n_elem):
+            c[-1].append(a.pop(np.random.choice(list(range(len(a))))))
+   elif n_elem == 8:
+      a=list(range(n_device))
+      c=[]
       c.append([])
-      for _ in range(n_elem):
-         c[-1].append(a.pop(np.random.choice(list(range(len(a))))))
+      c[-1].append(a.pop(list(range(len(a)))[random_state]))
+
 
    c.append([])
    for e in a:
@@ -127,8 +134,8 @@ def get_random_clusters(n_device, n_elem, random_state=0):
 os.chdir('./Kitsune')
 clusters = load_clusters()
 
-for n_clusters in [7]:
-   for n_restart in range(8,10):
+for n_clusters in [8]:
+   for n_restart in range(0,10):
       print(get_random_clusters(9,n_clusters,n_restart))
       for devices_list in get_random_clusters(9,n_clusters,n_restart):
          all_devices_mix = DataFrame()
