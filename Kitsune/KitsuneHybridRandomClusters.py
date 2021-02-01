@@ -134,7 +134,7 @@ def get_random_clusters(n_device, n_elem, random_state=0):
 os.chdir('./Kitsune')
 clusters = load_clusters()
 
-for n_clusters in [8]:
+for n_clusters in [4]:
    for n_restart in range(0,10):
       print(get_random_clusters(9,n_clusters,n_restart))
       for devices_list in get_random_clusters(9,n_clusters,n_restart):
