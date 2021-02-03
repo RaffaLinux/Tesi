@@ -63,10 +63,11 @@ def generate_graph(graph_name):
 
     j = 0
 
-    for n_cluster in [2,3,4,6,7]:
+    for n_cluster in [2,3,4,5,6,7,8]:
         tprs = []
         mean_fpr = np.linspace(1e-4,1,10000)
-        for n_restart in range(10):
+
+        for n_restart in range(9) if n_cluster == 8 else range(10):
             paths = glob.glob('./SKF/Hybrid/Randoms/'+str(n_cluster)+'/Restart'+str(n_restart)+'/*')
             print(paths)
             for path in paths:

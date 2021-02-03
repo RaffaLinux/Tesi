@@ -48,10 +48,10 @@ class Attack(Enum):
 def StampaValori(device_list_str, n_clusters,iteration, index, labels, RMSE, n_restart):
    dataset=pd.DataFrame({'Indice': index,'Maligno': labels[:,0], 'Dispositivo': labels[:,2], 'TipologiaAttacco': labels[:,1],'RMSE:': RMSE})
 
-   if not os.path.isdir('./SKF/Hybrid/Randoms/'+str(n_clusters)+'/Restart'+str(n_restart)+'/'+device_list_str):
-      os.makedirs('./SKF/Hybrid/Randoms/'+str(n_clusters)+'/Restart'+str(n_restart)+'/'+device_list_str)
+   if not os.path.isdir('./SKF/Hybrid/Randoms/'+str(n_clusters)+'new/Restart'+str(n_restart)+'/'+device_list_str):
+      os.makedirs('./SKF/Hybrid/Randoms/'+str(n_clusters)+'new/Restart'+str(n_restart)+'/'+device_list_str)
 
-   dataset.to_csv('./SKF/Hybrid/Randoms/'+str(n_clusters)+'/Restart'+str(n_restart)+'/'+device_list_str+'/SKF'+str(iteration)+'.csv',index=False, sep=',')
+   dataset.to_csv('./SKF/Hybrid/Randoms/'+str(n_clusters)+'new/Restart'+str(n_restart)+'/'+device_list_str+'/SKF'+str(iteration)+'.csv',index=False, sep=',')
 
 
 
@@ -134,7 +134,7 @@ def get_random_clusters(n_device, n_elem, random_state=0):
 os.chdir('./Kitsune')
 clusters = load_clusters()
 
-for n_clusters in [4]:
+for n_clusters in [2]:
    for n_restart in range(0,10):
       print(get_random_clusters(9,n_clusters,n_restart))
       for devices_list in get_random_clusters(9,n_clusters,n_restart):
