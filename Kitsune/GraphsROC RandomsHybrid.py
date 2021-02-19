@@ -63,6 +63,36 @@ def generate_graph(graph_name):
 
     j = 0
 
+    #DISTRIBUTED CLUSTERS
+    tprs = []
+    aucs = []
+    mean_fpr = np.linspace(1e-4,1,10000)
+    for dev in Device:
+        for fold in range(10):
+
+            dataset = pd.read_csv('./SKF/'+dev.name+'/Base/SKF'+str(fold)+'.csv')
+
+            dataset = dataset.to_numpy()
+            dataset = dataset[(dataset[:,2] == dev.value)]
+            fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
+            aucs.append(metrics.roc_auc_score(dataset[:,1],dataset[:,4], max_fpr=0.01))
+
+            #plt.plot(fpr,tpr)
+            interp_tpr = np.interp(mean_fpr, fpr, tpr)
+            interp_tpr[0] = 0.0
+            tprs.append(interp_tpr)
+    auc = np.mean(aucs)
+    print(auc)
+    mean_tpr = np.mean(tprs, axis=0)
+    mean_tpr[-1] = 1.0
+    std_tpr = np.std(tprs, axis=0)
+    print(mean_tpr[mean_fpr[:] == 0.01])
+
+
+    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Distributed Time Clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+    j = j+1
+
+    #HYBRID
     for n_cluster in [2,3,4,5,6,7,8]:
         tprs = []
         mean_fpr = np.linspace(1e-4,1,10000)
@@ -117,7 +147,7 @@ def generate_graph(graph_name):
     plt.yticks(np.arange(0, 1.05, .1))
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('ROC Curve '+graph_name)
+    plt.title('ROC Curve - '+graph_name)
     lgd = plt.figlegend(bbox_to_anchor = (0.50,-.20),ncol= 2, loc = 'lower center', fontsize = 'x-small', fancybox = True, frameon = True)
     lgd.get_frame().set_edgecolor('k')
 
@@ -129,4 +159,4 @@ def generate_graph(graph_name):
 
 os.chdir('./Kitsune/')
 
-generate_graph("RandomsHybrid")
+generate_graph("Number of devices")

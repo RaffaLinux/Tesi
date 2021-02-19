@@ -94,7 +94,7 @@ def generate_graph(graphs_list, graph_name):
     print(mean_tpr[mean_fpr[:] == 0.01])
 
 
-    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Hybrid good clusters mean",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Hybrid good clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
     j = j+1
 
 
@@ -129,14 +129,43 @@ def generate_graph(graphs_list, graph_name):
     print(mean_tpr[mean_fpr[:] == 0.01])
 
 
-    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Hybrid bad clusters mean",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Hybrid bad clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+    j = j+1
+
+#DISTRIBUTED CLUSTERS
+    tprs = []
+    aucs = []
+    mean_fpr = np.linspace(1e-4,1,10000)
+    for dev in Device:
+        for fold in range(10):
+
+            dataset = pd.read_csv('./SKF/'+dev.name+'/Base/SKF'+str(fold)+'.csv')
+
+            dataset = dataset.to_numpy()
+            dataset = dataset[(dataset[:,2] == dev.value)]
+            fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
+            aucs.append(metrics.roc_auc_score(dataset[:,1],dataset[:,4], max_fpr=0.01))
+
+            #plt.plot(fpr,tpr)
+            interp_tpr = np.interp(mean_fpr, fpr, tpr)
+            interp_tpr[0] = 0.0
+            tprs.append(interp_tpr)
+    auc = np.mean(aucs)
+    print(auc)
+    mean_tpr = np.mean(tprs, axis=0)
+    mean_tpr[-1] = 1.0
+    std_tpr = np.std(tprs, axis=0)
+    print(mean_tpr[mean_fpr[:] == 0.01])
+
+
+    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Distributed Time Clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
     j = j+1
 
 #CENTRALIZED
     tprs = []
     mean_fpr = np.linspace(1e-4,1,10000)
     for fold in range(10):
-        dataset = pd.read_csv('./SKF/Centralized/Kmeans/best_10_mean/SKF'+str(fold)+'.csv')
+        dataset = pd.read_csv('./SKF/Centralized/Base/SKF'+str(fold)+'.csv')
         dataset = dataset.to_numpy()
         fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
         #plt.plot(fpr,tpr)
@@ -149,7 +178,7 @@ def generate_graph(graphs_list, graph_name):
 
 
 
-    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Centralized K-Means Best 10",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Centralized Time Clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
     j = j+1
 
 

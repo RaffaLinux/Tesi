@@ -55,12 +55,15 @@ def compute_accuracy(graphs_list, device):
             if (device.name == Device(2).name or device.name == Device(6).name) and atk.value >= 6: continue
             acc_score = np.zeros(10)
             for fold in range(10):
-                if device.name in paths[0]:
-                    dataset = pd.read_csv('./SKF/'+paths[0]+'/SKF'+str(fold)+'.csv')
-                elif device.name in paths[1]:
-                    dataset = pd.read_csv('./SKF/'+paths[1]+'/SKF'+str(fold)+'.csv')
-                else:   
+                if approach == "Distributed - Time Clusters":
                     dataset = pd.read_csv('./SKF/'+device.name+'/Base/SKF'+str(fold)+'.csv')
+                else:
+                    if device.name in paths[0]:
+                        dataset = pd.read_csv('./SKF/'+paths[0]+'/SKF'+str(fold)+'.csv')
+                    elif device.name in paths[1]:
+                        dataset = pd.read_csv('./SKF/'+paths[1]+'/SKF'+str(fold)+'.csv')
+                    else:   
+                        dataset = pd.read_csv('./SKF/'+device.name+'/Base/SKF'+str(fold)+'.csv')
                 dataset = dataset.to_numpy()
                 dataset = dataset[(dataset[:,2] == device.value)]
                 fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
@@ -148,6 +151,7 @@ graphs_list = dict()
 
 graphs_list["Hybrid - Good"] = ["Hybrid/Ecobee_ThermostatSimpleHome_XCS7_1003_WHT_Security_Camera", "Hybrid/Ennio_DoorbellProvision_PT_737E_Security_CameraProvision_PT_838_Security_CameraSimpleHome_XCS7_1002_WHT_Security_Camera"]
 graphs_list["Hybrid - Bad"] = ["Hybrid/Provision_PT_737E_Security_CameraSimpleHome_XCS7_1003_WHT_Security_Camera", "Hybrid/Danmini_DoorbellEcobee_ThermostatPhilips_B120N10_Baby_MonitorSamsung_SNH_1011_N_Webcam"]
+graphs_list["Distributed - Time Clusters"] = []
 
 for dev in Device:
     compute_accuracy(graphs_list,dev)
