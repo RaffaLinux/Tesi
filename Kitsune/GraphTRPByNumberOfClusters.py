@@ -20,6 +20,8 @@ import pickle
 from cycler import cycler
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+from matplotlib.ticker import MaxNLocator
+
 
 class Device(Enum):
    Danmini_Doorbell = 0
@@ -45,86 +47,77 @@ class Attack(Enum):
    mirai_udp = 9
    mirai_udpplain = 10
 
+#    print(mean_tpr[mean_fpr[:] == 0.01])
+
 def generate_graph(graphs_list):
-    fig = plt.figure()
-    ax = plt.gca()
     colors = ['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan']
-    linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
-    #plt.rc('axes', prop_cycle=(cycler('color', colors)*cycler('linestyle,[-,--,') ))
-    
-    ax.set_xscale("symlog",linthreshx=0.001)
-    x_coinflip = np.linspace(1e-4,1,1000)
-    y_coinflip = np.linspace(1e-4,1,1000)
-
-    plt.plot([1e-2, 1e-2], [0, 10], 'k:', alpha = .3)
-
-    plt.plot(x_coinflip,y_coinflip, 'k--', label= "Chance")
-
-    alg_str_fix = ""
-    if algorithm == 'Kshape': alg_str_fix = "K-Shape"
-    elif algorithm == 'Kmeans': alg_str_fix = "K-Means"
-    elif algorithm == 'KernelKmeans': alg_str_fix = "Kernel K-Means"
-
-    j = 0
-    graphs_list[device][algorithm] = range(2,math.floor(len(glob.glob('./SKF/'+device+'/'+algorithm+'**/*.csv'))/10) +2)
-
-    best_auc = (0,0)
-    for i in graphs_list[device][algorithm]:
+    markerstyles = ['o', 's', 'P']
+    for device in Device:
+        device = device.name
+        fig = plt.figure()
+        ax = plt.gca()
+        
         tprs = []
-        aucs = np.zeros(10)
         mean_fpr = np.linspace(1e-4,1,10000)
         for fold in range(10):
-            dataset = pd.read_csv('./SKF/'+device+'/'+algorithm+str(i)+'/SKF'+str(fold)+'.csv')
+            dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
             dataset = dataset.to_numpy()
             fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
-
-            aucs[fold] = metrics.roc_auc_score(dataset[:,1],dataset[:,4], max_fpr=0.01)
-
+            #plt.plot(fpr,tpr)
             interp_tpr = np.interp(mean_fpr, fpr, tpr)
             interp_tpr[0] = 0.0
             tprs.append(interp_tpr)
-        auc = np.mean(aucs)
-        if auc > best_auc[1]: best_auc = i,auc
-        print(algorithm +" "+str(i)+ " PAUC: "+str(auc))
         mean_tpr = np.mean(tprs, axis=0)
         mean_tpr[-1] = 1.0
         std_tpr = np.std(tprs, axis=0)
         tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
         tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-        line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label=''+alg_str_fix+' '+str(i),linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
-        j = j+1
-    print(best_auc)
+        plt.axhline(y=mean_tpr[mean_fpr[:] == 0.01], color='k', linestyle='-', label = 'Time Clusters')
 
-    tprs = []
-    mean_fpr = np.linspace(1e-4,1,10000)
-    for fold in range(10):
-        dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
-        dataset = dataset.to_numpy()
-        fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
-        #plt.plot(fpr,tpr)
-        interp_tpr = np.interp(mean_fpr, fpr, tpr)
-        interp_tpr[0] = 0.0
-        tprs.append(interp_tpr)
-    mean_tpr = np.mean(tprs, axis=0)
-    mean_tpr[-1] = 1.0
-    std_tpr = np.std(tprs, axis=0)
-    tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-    tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-    plt.plot(mean_fpr, mean_tpr,"k-", label='Time Clusters',linewidth = 1)
+        j = 0
+        for algorithm in ['Kshape','Kmeans','KernelKmeans']:
+            y_tprs = []
+            x_clusters = []
+
+            alg_str_fix = ""
+            if algorithm == 'Kshape': alg_str_fix = "K-Shape"
+            elif algorithm == 'Kmeans': alg_str_fix = "K-Means"
+            elif algorithm == 'KernelKmeans': alg_str_fix = "Kernel K-Means"
+
+            
+            for i in graphs_list[device][algorithm]:
+                tprs = []
+                aucs = np.zeros(10)
+                mean_fpr = np.linspace(1e-4,1,10000)
+                for fold in range(10):
+                    dataset = pd.read_csv('./SKF/'+device+'/'+algorithm+str(i)+'/SKF'+str(fold)+'.csv')
+                    dataset = dataset.to_numpy()
+                    fpr,tpr,thresholds= metrics.roc_curve(dataset[:,1],dataset[:,4])
+                    interp_tpr = np.interp(mean_fpr, fpr, tpr)
+                    interp_tpr[0] = 0.0
+                    tprs.append(interp_tpr)
+                auc = np.mean(aucs)
+                mean_tpr = np.mean(tprs, axis=0)
+                mean_tpr[-1] = 1.0
+                std_tpr = np.std(tprs, axis=0)
+                y_tprs.append(mean_tpr[mean_fpr[:] == 0.01])
+                x_clusters.append(i)
+            plt.plot(x_clusters,y_tprs,color = colors[j%len(colors)], marker='o', label = alg_str_fix)
+            j = j+1
 
 
-    plt.xlim([1e-4, 1.05])
-    plt.ylim([0, 1.05])
-    plt.yticks(np.arange(0, 1.05, .1))
-    #plt.xticks(np.arange(1e-3, 1.1, .1))
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('ROC Curve '+device.replace('_',' ')+' - '+alg_str_fix)
-    lgd = plt.figlegend(bbox_to_anchor = (0.50,-.20),ncol= 5, loc = 'lower center', fontsize = 'x-small', fancybox = True, frameon = True)
-    lgd.get_frame().set_edgecolor('k')
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.ylim([0, 1.05])
+        plt.yticks(np.arange(0, 1.05, .1))
+        #plt.xticks(np.arange(1e-3, 1.1, .1))
+        plt.xlabel('Number of Clusters')
+        plt.ylabel('True Positive Rate')
+        plt.title('Number of Clusters / TPR - '+device.replace('_',' '))
+        lgd = plt.figlegend(bbox_to_anchor = (0.50,-0.05),ncol= 5, loc = 'lower center', fontsize = 'x-small', fancybox = True, frameon = True)
+        lgd.get_frame().set_edgecolor('k')
 
 
-    plt.savefig('./Graphs/ROC/'+device+'_'+algorithm+'.pdf',bbox_extra_artists = [lgd],bbox_inches='tight')
+        plt.savefig('./Graphs/TPRNclusters/'+device+'.pdf',bbox_extra_artists = [lgd],bbox_inches='tight')
 
 
 
@@ -175,7 +168,5 @@ graphs_list[Device(8).name] = dict()
 graphs_list[Device(8).name]['Kshape'] = range(2,25)
 graphs_list[Device(8).name]['Kmeans'] = range(2,18)
 graphs_list[Device(8).name]['KernelKmeans'] = range(2,21)
-
-device = Device(int(sys.argv[1])).name
 
 generate_graph(graphs_list)

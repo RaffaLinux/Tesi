@@ -148,7 +148,7 @@ device = device.name
 print("\nTraining Base")
 n_autoencoder = 5
 
-tss_iteration = 0
+skf_iteration = 0
 
 for train_index, test_index in skf.split(device_all, device_all[:,116]):
    with tf.device('/cpu:0'):
@@ -227,6 +227,6 @@ for train_index, test_index in skf.split(device_all, device_all[:,116]):
          RMSE[i]= np.sqrt(metrics.mean_squared_error(pred[i],test_score[i]))
       
       
-      StampaValori(device,"Base",5, tss_iteration, test_index, test_labels, RMSE)
+      StampaValori(device,"Base",5, skf_iteration, test_index, test_labels, RMSE)
       
-      tss_iteration = tss_iteration+1
+      skf_iteration = skf_iteration+1
