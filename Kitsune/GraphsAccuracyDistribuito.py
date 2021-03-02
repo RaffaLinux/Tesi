@@ -63,7 +63,10 @@ def compute_accuracy(graphs_list, device):
                     dataset = pd.read_csv('./SKF/'+device+'/'+algorithm+str(i)+'/SKF'+str(fold)+'.csv')
                     dataset = dataset.to_numpy()
                     fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-                    indices = np.where(fpr>=0.001)
+                    if (device == Device(2).name or device == Device(6).name):
+                        indices = np.where(fpr>=0.01)
+                    else:
+                        indices = np.where(fpr>=0.001)
                     index = np.min(indices)
                     soglia = thresholds[index]
                     dataset = dataset[(dataset[:,3] == atk.value)]
@@ -94,7 +97,10 @@ def compute_accuracy(graphs_list, device):
             dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
             dataset = dataset.to_numpy()
             fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-            indices = np.where(fpr>=0.001)
+            if (device == Device(2).name or device == Device(6).name):
+                indices = np.where(fpr>=0.01)
+            else:
+                indices = np.where(fpr>=0.001)
             index = np.min(indices)
             soglia = thresholds[index]
             dataset=dataset[(dataset[:,3] == atk.value)]
@@ -117,11 +123,11 @@ def compute_accuracy(graphs_list, device):
 
 def generate_graph(df, device):
     sns.set_style("ticks")
-    g = sns.catplot(data=df, kind="bar", x="Attack",ci = 'Accuracy Std. Dev.', y="Accuracy Mean", hue="Algorithm",palette="tab10", alpha=1, height=4.5, aspect = 16/9)
+    g = sns.catplot(data=df, kind="bar", x="Attack",ci = 'Accuracy Std. Dev.', y="Accuracy Mean", hue="Algorithm",palette="tab10", alpha=1, height=2, aspect = 3.5)
     #g.despine(left=True)
     g.set_axis_labels("", "Accuracy")
     g.legend.set_title("")
-    g.set_xticklabels(rotation=30)
+    g.set_xticklabels(rotation=30, fontsize ="small")
     g._legend.remove()
 
     ax = g.facet_axis(0,0)
@@ -144,7 +150,7 @@ def generate_graph(df, device):
                     p.get_height() * 1.02, 
                     '{0:.2f}'.format(p.get_height()), 
                     color='black',rotation = 45, size= "x-small")
-    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.3), fancybox = True,edgecolor = "k", fontsize = 'large')
+    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.6), fancybox = True,edgecolor = "k", fontsize = 'small')
     #plt.legend(bbox_to_anchor=(1.01, 1),borderaxespad=0)
     g.savefig('./Graphs/Accuracy/Distribuito/'+device+'.pdf')
 

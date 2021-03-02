@@ -117,7 +117,7 @@ def compute_accuracy(graphs_list):
 
 def generate_graph(df):
     sns.set_style("ticks")
-    g = sns.catplot(data=df, kind="bar", x="Attack",ci = 'Accuracy Std. Dev.', y="Accuracy Mean", hue="Algorithm",palette="tab10", alpha=1, height=4.5, aspect = 16/9)
+    g = sns.catplot(data=df, kind="bar", x="Attack",ci = 'Accuracy Std. Dev.', y="Accuracy Mean", hue="Algorithm",palette="tab10", alpha=1, height=2, aspect = 3.5)
     #g.despine(left=True)
     g.set_axis_labels("", "Accuracy")
     g.legend.set_title("")
@@ -139,7 +139,7 @@ def generate_graph(df):
                 p.get_height() * 1.02, 
                 '{0:.2f}'.format(p.get_height()), 
                 color='black',rotation = 45, size= "x-small")
-    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.3), fancybox = True,edgecolor = "k", fontsize = 'large')
+    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.6), fancybox = True,edgecolor = "k", fontsize = 'small')
     #plt.legend(bbox_to_anchor=(1.01, 1),borderaxespad=0)
     g.savefig('./Graphs/Accuracy/Distribuito/AllDistribuito.pdf')
 

@@ -57,7 +57,10 @@ def compute_accuracy(graphs_list, device):
                 dataset = pd.read_csv('./SKF/'+device+'/'+algorithm+str(i)+'/SKF'+str(fold)+'.csv')
                 dataset = dataset.to_numpy()
                 fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-                indices = np.where(fpr>=0.001)
+                if (device == Device(2).name or device == Device(6).name):
+                    indices = np.where(fpr>=0.01)
+                else:
+                    indices = np.where(fpr>=0.001)
                 index = np.min(indices)
                 soglia = thresholds[index]
                 labels = np.zeros(dataset.shape[0])
@@ -81,7 +84,10 @@ def compute_accuracy(graphs_list, device):
         dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
         dataset = dataset.to_numpy()
         fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-        indices = np.where(fpr>=0.001)
+        if (device == Device(2).name or device == Device(6).name):
+            indices = np.where(fpr>=0.01)
+        else:
+            indices = np.where(fpr>=0.001)
         index = np.min(indices)
         soglia = thresholds[index]
         labels = np.zeros(dataset.shape[0])
@@ -117,6 +123,7 @@ def generate_graph(df,device):
                 p.get_height() * 1.02, 
                 '{0:.2f}'.format(p.get_height()), 
                 color='black', rotation='horizontal', size= "medium")
+    plt.ylim((0,1))
     plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.2), fancybox = True,edgecolor = "k")
     #plt.legend(bbox_to_anchor=(1.01, 1),borderaxespad=0)
     g.savefig('./Graphs/F1Scores/'+device+'.pdf')

@@ -61,7 +61,7 @@ def compute_accuracy():
                     dataset = pd.read_csv('./SKF/Centralized/'+algorithm+'/'+method+'/SKF'+str(fold)+'.csv')
                     dataset = dataset.to_numpy()
                     fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-                    indices = np.where(fpr>=0.1)
+                    indices = np.where(fpr>=0.02)
                     index = np.min(indices)
                     soglia = thresholds[index]
                     dataset = dataset[(dataset[:,3] == atk.value)]
@@ -87,7 +87,7 @@ def compute_accuracy():
                 dataset = pd.read_csv('./SKF/Centralized/Base/SKF'+str(fold)+'.csv')
                 dataset = dataset.to_numpy()
                 fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-                indices = np.where(fpr>=0.1)
+                indices = np.where(fpr>=0.02)
                 index = np.min(indices)
                 soglia = thresholds[index]
                 dataset=dataset[(dataset[:,3] == atk.value)]
@@ -110,7 +110,7 @@ def compute_accuracy():
 
 def generate_graph(df, algorithm):
     sns.set_style("ticks")
-    g = sns.catplot(data=df, kind="bar", x="Attack", y="Accuracy Mean", hue="Method",palette="tab10", alpha=1, height=5, aspect = 16/9)
+    g = sns.catplot(data=df, kind="bar", x="Attack", y="Accuracy Mean", hue="Method",palette="tab10", alpha=1, height=2, aspect = 5)
     #g.despine(left=True)
     g.set_axis_labels("", "Accuracy")
     g.legend.set_title("")
@@ -122,8 +122,8 @@ def generate_graph(df, algorithm):
         methods = ['best_10_mean','best_10_weighted','best_support_mean','best_support_weighted','biggest_clusters_mean','biggest_clusters_weighted']
         df_temp = df.loc[df["Method"].str.contains(methods[index % 6].replace("_", " ").capitalize())]
 
-        ax.text(p.get_x()-0.03,p.get_height() * 1.02, '{0:.2f}'.format(p.get_height()), color='black',rotation = 45, size= "x-small")
-    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.3), fancybox = True,edgecolor = "k", fontsize = 'large')
+        ax.text(p.get_x()-0.03,p.get_height() * 1.02, '{0:.2f}'.format(p.get_height()), color='black',rotation = 45, size= "xx-small")
+    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.75), fancybox = True,edgecolor = "k", fontsize = 'small')
     #plt.legend(bbox_to_anchor=(1.01, 1),borderaxespad=0)
     g.savefig('./Graphs/Accuracy/Centralized/'+algorithm+'.pdf')
 
