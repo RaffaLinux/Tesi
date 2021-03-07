@@ -67,7 +67,7 @@ def compute_accuracy(graphs_list, device):
                 dataset = dataset.to_numpy()
                 dataset = dataset[(dataset[:,2] == device.value)]
                 fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-                indices = np.where(fpr>=0.001)
+                indices = np.where(fpr>=0.01)
                 index = np.min(indices)
                 soglia = thresholds[index]
                 dataset = dataset[(dataset[:,3] == atk.value)]

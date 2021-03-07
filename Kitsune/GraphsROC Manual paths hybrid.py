@@ -94,7 +94,7 @@ def generate_graph(graphs_list, graph_name):
     print(mean_tpr[mean_fpr[:] == 0.01])
 
 
-    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Hybrid good clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Hybrid - Good",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
     j = j+1
 
 
@@ -129,7 +129,7 @@ def generate_graph(graphs_list, graph_name):
     print(mean_tpr[mean_fpr[:] == 0.01])
 
 
-    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Hybrid bad clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Hybrid - Bad",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
     j = j+1
 
 #DISTRIBUTED CLUSTERS
@@ -158,7 +158,7 @@ def generate_graph(graphs_list, graph_name):
     print(mean_tpr[mean_fpr[:] == 0.01])
 
 
-    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Distributed Time Clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Distributed - Time Clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
     j = j+1
 
 #CENTRALIZED
@@ -178,7 +178,7 @@ def generate_graph(graphs_list, graph_name):
 
 
 
-    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Centralized Time Clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
+    line = plt.plot(mean_fpr, mean_tpr, color = colors[j%len(colors)], label= "Centralized - Time Clusters",linewidth = 1, linestyle = linestyles[math.floor(j/len(colors))])
     j = j+1
 
 
@@ -188,7 +188,7 @@ def generate_graph(graphs_list, graph_name):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('ROC Curve '+graph_name)
-    lgd = plt.figlegend(bbox_to_anchor = (0.50,-.20),ncol= 2, loc = 'lower center', fontsize = 'x-small', fancybox = True, frameon = True)
+    lgd = plt.figlegend(bbox_to_anchor = (0.50,-.10),ncol= 2, loc = 'lower center', fontsize = 'x-small', fancybox = True, frameon = True)
     lgd.get_frame().set_edgecolor('k')
 
 

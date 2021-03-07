@@ -106,7 +106,7 @@ def compute_accuracy(graphs_list, device):
 
 def generate_graph(df,device):
     sns.set_style("ticks")
-    g = sns.catplot(data=df, kind="bar", x="Device",ci = 'F1 Std. Dev.', y="F1 Mean", hue="Algorithm",palette="tab10", alpha=1, height=5, aspect = 4/3)
+    g = sns.catplot(data=df, kind="bar", x="Device",ci = 'F1 Std. Dev.', y="F1 Mean", hue="Algorithm",palette="tab10", alpha=1, height=3, aspect = 1.5)
     #g.despine(left=True)
     g.set_axis_labels("", "F1 Score")
     g.legend.set_title("")
@@ -119,12 +119,12 @@ def generate_graph(df,device):
         yerr = df_temp.iloc[0]["F1 Std. Dev."]
         ax.errorbar(p.get_x() +0.1, p.get_height(), yerr, ecolor = 'k', linewidth = .5)
 
-        ax.text(p.get_x() + 0.05, 
+        ax.text(p.get_x() + 0.02, 
                 p.get_height() * 1.02, 
                 '{0:.2f}'.format(p.get_height()), 
                 color='black', rotation='horizontal', size= "medium")
     plt.ylim((0,1))
-    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.5,-.2), fancybox = True,edgecolor = "k")
+    plt.legend(loc='lower center', ncol= 4, bbox_to_anchor = (.45,-.3), fancybox = True,edgecolor = "k", fontsize = "small")
     #plt.legend(bbox_to_anchor=(1.01, 1),borderaxespad=0)
     g.savefig('./Graphs/F1Scores/'+device+'.pdf')
 

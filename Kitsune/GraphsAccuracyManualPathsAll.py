@@ -54,22 +54,12 @@ def compute_accuracy(graphs_list):
         for approach, paths in graphs_list.items():
             labels = [0,1]
             len_dataset = 0
-            for device in Device:
-                device = device.name
-                if (device == Device(2).name or device == Device(6).name) and atk.value >= 6: continue
+            if approach == "Centralized - Time Clusters":
                 for fold in range(10):
-                    if approach == "Distributed - Time Clusters":
-                        dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
-                    else:
-                        if device in paths[0]:
-                            dataset = pd.read_csv('./SKF/'+paths[0]+'/SKF'+str(fold)+'.csv')
-                        elif device in paths[1]:
-                            dataset = pd.read_csv('./SKF/'+paths[1]+'/SKF'+str(fold)+'.csv')
-                        else:   
-                            dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv') 
+                    dataset = pd.read_csv('./SKF/Centralized/Base/SKF'+str(fold)+'.csv')
                     dataset = dataset.to_numpy()
                     fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-                    indices = np.where(fpr>=0.001)
+                    indices = np.where(fpr>=0.01)
                     index = np.min(indices)
                     soglia = thresholds[index]
                     dataset = dataset[(dataset[:,3] == atk.value)]
@@ -79,80 +69,112 @@ def compute_accuracy(graphs_list):
                             labels.append(0)
                         else:
                             labels.append(1)
-            if(atk.value == 0):
-                acc_score = (np.unique(labels,return_counts= True)[1][0] - 1 )/len_dataset
+                    if(atk.value == 0):
+                        acc_score = (np.unique(labels,return_counts= True)[1][0] - 1 )/len_dataset
+                    else:
+                        acc_score = (np.unique(labels,return_counts= True)[1][1] - 1 )/len_dataset
+                    acc_mean = acc_score
+                    df.loc[len(df)] = [approach, atk.name.replace('_',' ').capitalize(),acc_mean, 0]
             else:
-                acc_score = (np.unique(labels,return_counts= True)[1][1] - 1 )/len_dataset
-            acc_mean = acc_score
-            df.loc[len(df)] = [approach, atk.name.replace('_',' ').capitalize(),acc_mean, 0]
+                for device in Device:
+                    device = device.name
+                    if (device == Device(2).name or device == Device(6).name) and atk.value >= 6: continue
+                    for fold in range(10):
+                        if approach == "Distributed - Time Clusters":
+                            dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
+                        else:
+                            if device in paths[0]:
+                                dataset = pd.read_csv('./SKF/'+paths[0]+'/SKF'+str(fold)+'.csv')
+                            elif device in paths[1]:
+                                dataset = pd.read_csv('./SKF/'+paths[1]+'/SKF'+str(fold)+'.csv')
+                            else:   
+                                dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv') 
+                        dataset = dataset.to_numpy()
+                        fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
+                        indices = np.where(fpr>=0.01)
+                        index = np.min(indices)
+                        soglia = thresholds[index]
+                        dataset = dataset[(dataset[:,3] == atk.value)]
+                        len_dataset = len_dataset + len(dataset[:,1])
+                        for j in range(dataset.shape[0]):
+                            if dataset[j,4] <= soglia:
+                                labels.append(0)
+                            else:
+                                labels.append(1)
+                if(atk.value == 0):
+                    acc_score = (np.unique(labels,return_counts= True)[1][0] - 1 )/len_dataset
+                else:
+                    acc_score = (np.unique(labels,return_counts= True)[1][1] - 1 )/len_dataset
+                acc_mean = acc_score
+                df.loc[len(df)] = [approach, atk.name.replace('_',' ').capitalize(),acc_mean, 0]
 
-            # if (device.name == Device(2).name or device.name == Device(6).name) and atk.value >= 6: continue
-            # acc_score = np.zeros(10)
-            # for fold in range(10):
-            #     if approach == "Distributed - Time Clusters":
-            #         dataset = pd.read_csv('./SKF/'+device.name+'/Base/SKF'+str(fold)+'.csv')
-            #     else:
-            #         if device.name in paths[0]:
-            #             dataset = pd.read_csv('./SKF/'+paths[0]+'/SKF'+str(fold)+'.csv')
-            #         elif device.name in paths[1]:
-            #             dataset = pd.read_csv('./SKF/'+paths[1]+'/SKF'+str(fold)+'.csv')
-            #         else:   
-            #             dataset = pd.read_csv('./SKF/'+device.name+'/Base/SKF'+str(fold)+'.csv')
-            #     dataset = dataset.to_numpy()
-            #     dataset = dataset[(dataset[:,2] == device.value)]
-            #     fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-            #     indices = np.where(fpr>=0.001)
-            #     index = np.min(indices)
-            #     soglia = thresholds[index]
-            #     dataset = dataset[(dataset[:,3] == atk.value)]
-            #     labels = np.zeros(dataset.shape[0])
-            #     for j in range(dataset.shape[0]):
-            #         if dataset[j,4] <= soglia:
-            #             labels[j] = 0
-            #         else:
-            #             labels[j] = 1
-            #     labels = np.concatenate([labels, [0,1]])
-            #     if(atk.value == 0):
-            #         acc_score[fold] = (np.unique(labels,return_counts= True)[1][0] - 1 )/len(dataset[:,1])
-            #     else:
-            #         acc_score[fold] = (np.unique(labels,return_counts= True)[1][1] - 1 )/len(dataset[:,1])
-            # acc_mean = acc_score.mean()
-            # acc_std = acc_score.std()
-         
-            # df.loc[len(df)] = [approach, atk.name.replace('_',' ').capitalize(), acc_mean,acc_std]
+                # if (device.name == Device(2).name or device.name == Device(6).name) and atk.value >= 6: continue
+                # acc_score = np.zeros(10)
+                # for fold in range(10):
+                #     if approach == "Distributed - Time Clusters":
+                #         dataset = pd.read_csv('./SKF/'+device.name+'/Base/SKF'+str(fold)+'.csv')
+                #     else:
+                #         if device.name in paths[0]:
+                #             dataset = pd.read_csv('./SKF/'+paths[0]+'/SKF'+str(fold)+'.csv')
+                #         elif device.name in paths[1]:
+                #             dataset = pd.read_csv('./SKF/'+paths[1]+'/SKF'+str(fold)+'.csv')
+                #         else:   
+                #             dataset = pd.read_csv('./SKF/'+device.name+'/Base/SKF'+str(fold)+'.csv')
+                #     dataset = dataset.to_numpy()
+                #     dataset = dataset[(dataset[:,2] == device.value)]
+                #     fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
+                #     indices = np.where(fpr>=0.001)
+                #     index = np.min(indices)
+                #     soglia = thresholds[index]
+                #     dataset = dataset[(dataset[:,3] == atk.value)]
+                #     labels = np.zeros(dataset.shape[0])
+                #     for j in range(dataset.shape[0]):
+                #         if dataset[j,4] <= soglia:
+                #             labels[j] = 0
+                #         else:
+                #             labels[j] = 1
+                #     labels = np.concatenate([labels, [0,1]])
+                #     if(atk.value == 0):
+                #         acc_score[fold] = (np.unique(labels,return_counts= True)[1][0] - 1 )/len(dataset[:,1])
+                #     else:
+                #         acc_score[fold] = (np.unique(labels,return_counts= True)[1][1] - 1 )/len(dataset[:,1])
+                # acc_mean = acc_score.mean()
+                # acc_std = acc_score.std()
+            
+                # df.loc[len(df)] = [approach, atk.name.replace('_',' ').capitalize(), acc_mean,acc_std]
 
 
-    # for atk in Attack:
-    #     if (device == Device(2).name or device == Device(6).name) and atk.value >= 6: continue
-    #     acc_score = np.zeros(10)
-    #     for fold in range(10):
-    #         dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
-    #         dataset = dataset.to_numpy()
-    #         fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
-    #         indices = np.where(fpr>=0.001)
-    #         index = np.min(indices)
-    #         soglia = thresholds[index]
-    #         dataset=dataset[(dataset[:,3] == atk.value)]
-    #         labels = np.zeros(dataset.shape[0])
-    #         for j in range(dataset.shape[0]):
-    #             if dataset[j,4] <= soglia:
-    #                 labels[j] = 0
-    #             else:
-    #                 labels[j] = 1
-    #         labels = np.concatenate([labels, [0,1]])
-    #         if(atk.value == 0):
-    #             acc_score[fold] = (np.unique(labels,return_counts= True)[1][0] - 1)/len(dataset[:,1])
-    #         else:
-    #             acc_score[fold] = (np.unique(labels,return_counts= True)[1][1] - 1)/len(dataset[:,1])
-    #     acc_mean = acc_score.mean()
-    #     acc_std = acc_score.std()            
-    #     df.loc[len(df)] = ['Time Clusters', atk.name.replace('_',' ').capitalize(), acc_mean,acc_std]
+        # for atk in Attack:
+        #     if (device == Device(2).name or device == Device(6).name) and atk.value >= 6: continue
+        #     acc_score = np.zeros(10)
+        #     for fold in range(10):
+        #         dataset = pd.read_csv('./SKF/'+device+'/Base/SKF'+str(fold)+'.csv')
+        #         dataset = dataset.to_numpy()
+        #         fpr,tpr,thresholds = metrics.roc_curve(dataset[:,1],dataset[:,4])
+        #         indices = np.where(fpr>=0.001)
+        #         index = np.min(indices)
+        #         soglia = thresholds[index]
+        #         dataset=dataset[(dataset[:,3] == atk.value)]
+        #         labels = np.zeros(dataset.shape[0])
+        #         for j in range(dataset.shape[0]):
+        #             if dataset[j,4] <= soglia:
+        #                 labels[j] = 0
+        #             else:
+        #                 labels[j] = 1
+        #         labels = np.concatenate([labels, [0,1]])
+        #         if(atk.value == 0):
+        #             acc_score[fold] = (np.unique(labels,return_counts= True)[1][0] - 1)/len(dataset[:,1])
+        #         else:
+        #             acc_score[fold] = (np.unique(labels,return_counts= True)[1][1] - 1)/len(dataset[:,1])
+        #     acc_mean = acc_score.mean()
+        #     acc_std = acc_score.std()            
+        #     df.loc[len(df)] = ['Time Clusters', atk.name.replace('_',' ').capitalize(), acc_mean,acc_std]
 
     generate_graph(df, device)
 
 def generate_graph(df, device):
     sns.set_style("ticks")
-    g = sns.catplot(data=df, kind="bar", x="Attack",ci = 'Accuracy Std. Dev.', y="Accuracy Mean", hue="Approach",palette="tab10", alpha=1, height=2, aspect = 3.5)
+    g = sns.catplot(data=df, kind="bar", x="Attack", y="Accuracy Mean", hue="Approach",palette="tab10", alpha=1, height=2, aspect = 3.5)
     #g.despine(left=True)
    #g.despine(left=True)
     g.set_axis_labels("", "Accuracy")
@@ -189,5 +211,5 @@ graphs_list = dict()
 graphs_list["Hybrid - Good"] = ["Hybrid/Ecobee_ThermostatSimpleHome_XCS7_1003_WHT_Security_Camera", "Hybrid/Ennio_DoorbellProvision_PT_737E_Security_CameraProvision_PT_838_Security_CameraSimpleHome_XCS7_1002_WHT_Security_Camera"]
 graphs_list["Hybrid - Bad"] = ["Hybrid/Provision_PT_737E_Security_CameraSimpleHome_XCS7_1003_WHT_Security_Camera", "Hybrid/Danmini_DoorbellEcobee_ThermostatPhilips_B120N10_Baby_MonitorSamsung_SNH_1011_N_Webcam"]
 graphs_list["Distributed - Time Clusters"] = []
-
+graphs_list["Centralized - Time Clusters"] = []
 compute_accuracy(graphs_list)
